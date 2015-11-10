@@ -51,6 +51,44 @@ def test___eq__():
     assert c1 == c3
     assert c1 == c2 == c3
 
+def test___iadd__():
+    """Test += operator for Calendar object."""
+    def test_TypeError(self, other):
+        """Test TypeError raising during += operator of Calendar."""
+        with pytest.raises(TypeError) as excinfo:
+            self += other
+    def test_ValueError(self, other):
+        """Test ValueError raising during += operator of Calendar."""
+        with pytest.raises(ValueError) as excinfo:
+            self += other
+
+    a1 = Appointment("yo","saturday","12:30pm","1:30pm", [1, 2, 3])
+    a2 = Appointment("yerboi","Friday","1:30am","11:30am", [1, 4, 5])
+    a3 = Appointment("we out here","Tuesday","11:30am","12:30pm", [1])
+    a4 = Appointment("bluv","Thursday","11:30am","12:30pm", [2, 6])
+    a5 = Appointment("blarg","wedneSdaY","11:30am","12:30pm", [1, 2, 3, 4, 5])
+    a1_conf = Appointment("yo_conf","saturday","12:30pm","1:30pm", [1, 2, 3])
+
+    c1 = Calendar(a1, a2)
+    c2 = Calendar(a3, a4)
+    c1_conf = Calendar(a3, a1_conf)
+
+    test_TypeError(c1, None)
+    test_TypeError(c1, "")
+    test_ValueError(c1, a1_conf)
+    test_ValueError(c1, c1_conf)
+
+    #test duplicates get dropped durring addition
+    c1 += a1
+    assert len(c1) == 2
+    c1 += c1
+    assert len(c1) == 2
+    c1 += c2
+    assert c1 == Calendar(a1, a2, a3, a4)
+    assert c1 == Calendar(a4, a3, a2, a1)
+    c1 += a5
+    assert c1 == Calendar(a4, a3, a5, a2, a1)
+
 def test___ne__():
     """Test == operator of Calendar object."""
     def test_TypeError(self, other):
@@ -96,11 +134,11 @@ def test___len__():
 def test___getitem__():
     """Test Test indexing for Calendar."""
     def test_TypeError(calendar, key):
-        """Test TypeError raising during ."""
+        """Test TypeError raising during calendar[key]."""
         with pytest.raises(TypeError) as excinfo:
             calendar[key]
     def test_IndexError(calendar, key):
-        """Test IndexError raising during Calendar object construction."""
+        """Test IndexError raising during calendar[key]."""
         with pytest.raises(IndexError) as excinfo:
             calendar[key]
 
@@ -127,15 +165,15 @@ def test___getitem__():
 def test___setitem__():
     """Test Calendar[key] = value."""
     def test_TypeError(calendar, key, value):
-        """Test TypeError raising during ."""
+        """Test TypeError raising during calendar[key] = value."""
         with pytest.raises(TypeError) as excinfo:
             calendar[key] = value
     def test_IndexError(calendar, key, value):
-        """Test IndexError raising during Calendar object construction."""
+        """Test IndexError raising during calendar[key] = value."""
         with pytest.raises(IndexError) as excinfo:
             calendar[key] = value
     def test_ValueError(calendar, key, value):
-        """Test ValueError raising during ."""
+        """Test ValueError raising during calendar[key] = value."""
         with pytest.raises(ValueError) as excinfo:
             calendar[key] = value
 
@@ -205,13 +243,55 @@ def test___contains__():
     assert a3 not in c1
 
 def test__is_appointment_conflicting():
-    """Test ."""
-    pass
+    """Test Calendar's _is_appointment_conflicting() function."""
+    def test_TypeError(calendar, appointment):
+        """Test TypeError raising during _is_appointment_conflicting()."""
+        with pytest.raises(TypeError) as excinfo:
+            calendar._is_appointment_conflicting(appointment)
+
+    a1 = Appointment("yo","saturday","12:30pm","1:30pm", [1, 2, 3])
+    a1_copy = Appointment("yo_copy","saturday","12:30pm","1:30pm", [1, 2, 3])
+    a2 = Appointment("yerboi","saturday","1:30am","11:30am", [1, 4, 5])
+    a3 = Appointment("we out here","saturday","11:30am","12:30pm", [1])
+
+    c1 = Calendar(a1, a2)
+
+    test_TypeError(c1, None)
+    test_TypeError(c1, "Appointment")
+
+    assert not c1._is_appointment_conflicting(a1)
+    assert c1._is_appointment_conflicting(a1_copy)
+    assert not c1._is_appointment_conflicting(a3)
 
 def test__is_calendar_conflicting():
-    """Test ."""
-    pass
+    """Test Calendar's _is_calendar_conflicting() function."""
+    def test_TypeError(calendar1, calendar2):
+        """Test TypeError raising during calendar[key] = value."""
+        with pytest.raises(TypeError) as excinfo:
+            calendar1._is_calendar_conflicting(calendar2)
 
-def test_add():
-    """Test ."""
-    pass
+    a1 = Appointment("yo","saturday","12:30pm","1:30pm", [1, 2, 3])
+    a2 = Appointment("yerboi","Friday","1:30am","11:30am", [1, 4, 5])
+    a3 = Appointment("we out here","Tuesday","11:30am","12:30pm", [1])
+    a4 = Appointment("bluv","Thursday","11:30am","12:30pm", [2, 6])
+    a5 = Appointment("yo_conflict","saturday","12:30pm","1:30pm", [1, 2, 6])
+
+    c1 = Calendar(a1, a2)
+    c2 = Calendar(a3, a4)
+    c3 = Calendar(a1, a3)
+    c4 = Calendar(a4, a5)
+
+    test_TypeError(c1, None)
+    test_TypeError(c1, "Calendar")
+
+    #test identity not conflicting
+    assert not c1._is_calendar_conflicting(c1)
+    #regular disjoint test
+    assert not c1._is_calendar_conflicting(c2)
+    assert not c2._is_calendar_conflicting(c1)
+    #test shared (but equal) appointment not conflicting
+    assert not c1._is_calendar_conflicting(c3)
+    assert not c3._is_calendar_conflicting(c1)
+    #test disjoint but conflicting calendars
+    assert c1._is_calendar_conflicting(c4)
+    assert c4._is_calendar_conflicting(c1)

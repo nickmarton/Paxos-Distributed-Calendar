@@ -1,6 +1,6 @@
 """Calendar class to wrap list of Appointments for Paxos Log Entries."""
 
-from Appointment import Appointment
+from Paxos.Classes.Appointment import Appointment
 
 class Calendar(object):
     """
@@ -58,6 +58,40 @@ class Calendar(object):
             return True
         else:
             return False
+
+    def __iadd__(self, other):
+        """
+        Implement + operator for Calendar.
+        Add an Appointment provided it isn't conflicting.
+        """
+
+        appointment_cond = hasattr(other, "_is_Appointment")
+        calendar_cond = hasattr(other, "_is_Calendar")
+
+        if not appointment_cond and not calendar_cond:
+            raise TypeError(
+                "Only Appointment or Calendar objects may be added to a "
+                "Calendar object.")
+
+        #handle addition of Appointment
+        if appointment_cond:
+            if self._is_appointment_conflicting(other):
+                raise ValueError(
+                    other._name + " is in conflict with Calendar")
+
+            if other not in self:
+                self._appointments.append(other)
+
+        #handle addition of Calendar
+        if calendar_cond:
+            if self._is_calendar_conflicting(other):
+                raise ValueError("Cannot add conflicting Calendars")
+
+            for appointment in other:
+                if appointment not in self:
+                    self._appointments.append(appointment)
+
+        return self
 
     def __ne__(self, other):
         """Implement != operator for Calendar objects; unordered equality."""
@@ -123,11 +157,13 @@ class Calendar(object):
 
         return False
 
-    @staticmethod
-    def _is_appointment_conflicting(calendar, appointment):
+    def _is_appointment_conflicting(self, appointment):
         """
         Determine if Appointment object appointment conflicts with any
         Appointment in Calendar object calendar.
+
+        NOTE: if a copy of appointment is in this Calendar, appointment param
+        will not conflict with the copy.
         """
 
         #Type checking first
@@ -136,44 +172,25 @@ class Calendar(object):
                 "appointment parameter must be an Appointment object")
 
         #if appointment conflicts with anything in this Calendar
-        for calendar_appointment in calendar:
-            if Appointment.is_conflicting(
-                calendar_appointment, appointment):
+        for calendar_appointment in self:
+            if Appointment._is_conflicting(calendar_appointment, appointment):
                 return True
 
         return False
 
-    @staticmethod
-    def _is_calendar_conflicting(calendar1, calendar2):
-        """Determine if calendar1 and calendar2 are conflicting."""
+    def _is_calendar_conflicting(self, other):
+        """Determine if self and other are conflicting."""
 
-        c1_cond = has_attr(calendar1, "_is_Calendar")
-        c2_cond = has_attr(calendar2, "_is_Calendar")
-
-        #if either parameter is not a calendar, raise TypeError
-        if not c1_cond or not c2_cond:
+        if not hasattr(other, "_is_Calendar"):
             raise TypeError("both parameters must be Calendar objects.")
 
         #if any pair of appointments is conflicting, calendars conflict
-        for appt1 in calendar1:
-            for appt2 in calendar2:
+        for appt1 in self:
+            for appt2 in other:
                 if Appointment._is_conflicting(appt1, appt2):
                     return True
 
         return False
-
-    def add(self, appointment):
-        """
-        Implement add for Calendar; add an Appointment provided it isn't
-        conflicting.
-        """
-
-        if Calendar._is_appointment_conflicting(self, appointment):
-            raise ValueError(
-                appointment._name + " is in conflict with Calendar")
-
-        if appointment not in self:
-            self._appointments.append(appointment)
 
 def main():
     """Quick tests."""
