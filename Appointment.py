@@ -50,6 +50,9 @@ class Appointment(object):
                 raise TypeError(
                     "participants parameter must contain only node_id ints")
 
+        if not participants:
+            raise ValueError("There must be at least 1 participant")
+
         self._name = name
         self._day = day
         self._start = start
@@ -59,7 +62,7 @@ class Appointment(object):
 
     def __eq__(self, other):
         """Determine if two Appointment objects are equivalent."""
-        if not hasattr(other, "is_Appointment"):
+        if not hasattr(other, "_is_Appointment"):
             raise TypeError("both operands must be Appointment objects.")
 
         c_name = self._name == other._name
@@ -77,12 +80,12 @@ class Appointment(object):
 
     def __ne__(self, other):
         """Determine if two Appointment objects are not equivalent."""
-        return not __eq__(self, other)
+        return not self.__eq__(other)
 
     def _key(self):
         """Key for Appointment hashing; simple tuple."""
         return (self._name, self._day, self._start, self._end,
-                                            self._participants)
+                                            tuple(self._participants))
 
     def __hash__(self):
         """Hash Appointment object; used so we can call set(Appointment)."""
@@ -125,6 +128,9 @@ class Appointment(object):
 
         if meridiem == "am":
             hour %= 12
+
+        if meridiem != "am" and meridiem != "pm":
+            raise ValueError("meridiem must be 'am' or 'pm'")
 
         #return time object
         return time(hour, minutes)

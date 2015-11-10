@@ -37,17 +37,16 @@ class Calendar(object):
 
     def __eq__(self, other):
         """Implement == operator for Calendar objects; unordered equality."""
-        if not hasattr(other, _"is_Calendar"):
-            rasie TypeError("both == operands must be Calendar objects")
+        if not hasattr(other, "_is_Calendar"):
+            raise TypeError("both == operands must be Calendar objects")
 
         intersection_length = len(
             set(self._appointments) & set(other._appointments))
-        self_length = len(self._appointments)
-        other_length = len(other._appointments)
+        union_length = len(set(self._appointments) | set(other._appointments))
 
         #if count of intersection is same as count of both lists they're the
         #same list
-        if intersection_length == self_length == other_length:
+        if intersection_length == union_length:
             return True
         else:
             return False
