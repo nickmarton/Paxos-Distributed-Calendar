@@ -56,6 +56,96 @@ class Calendar(object):
         """Implement != operator for Calendar objects; unordered equality."""
         return not self.__eq__(other)
 
+    def __len__(self):
+        """Implement len(Calendar)."""
+        return len(self._appointments)
+
+    def __getitem__(self, key):
+        """Implement indexing for Calendar object."""
+        try:
+            return self._appointments[key]
+        except TypeError:
+            raise TypeError("Index must be an int")
+        except KeyError:
+            raise KeyError("invalid key: " + str(key))
+
+    def __setitem__(self, key, value):
+        """
+        Implement Calendar[key] = value; needed to ensure no conflicts added.
+        """
+
+        #Ensure valid key while setting
+        try:
+            self._appointments[key] = value
+        except TypeError:
+            raise TypeError("Index must be an int")
+        except KeyError:
+            raise KeyError("invalid key: " + str(key))
+
+    def __iter__(self):
+        """Implement iterator for Calendar."""
+        for appointment in self._appointments:
+            yield appointment
+
+    def __contains__(self, item):
+        """Implement "in" operator for Calendar object."""
+        for appointment in Calendar:
+            if appointment == item:
+                return True
+
+        return False
+
+    @staticmethod
+    def _is_appointment_conflicting(calendar, appointment):
+        """
+        Determine if Appointment object appointment conflicts with any
+        Appointment in Calendar object calendar.
+        """
+
+        #Type checking first
+        if not hasattr(appointment, "_is_Appointment"):
+            raise TypeError(
+                "appointment parameter must be an Appointment object")
+
+        #if appointment conflicts with anything in this Calendar
+        for calendar_appointment in calendar:
+            if Appointment.is_conflicting(
+                calendar_appointment, appointment):
+                return True
+
+        return False
+
+    @staticmethod
+    def _is_calendar_conflicting(calendar1, calendar2):
+        """Determine if calendar1 and calendar2 are conflicting."""
+
+        c1_cond = has_attr(calendar1, "_is_Calendar")
+        c2_cond = has_attr(calendar2, "_is_Calendar")
+
+        #if either parameter is not a calendar, raise TypeError
+        if not c1_cond or not c2_cond:
+            raise TypeError("both parameters must be Calendar objects.")
+
+        #if any pair of appointments is conflicting, calendars conflict
+        for appt1 in calendar1:
+            for appt2 in calendar2:
+                if Appointment._is_conflicting(appt1, appt2):
+                    return True
+
+        return False
+
+    def add(self, appointment):
+        """
+        Implement add for Calendar; add an Appointment provided it isn't
+        conflicting.
+        """
+
+        if Calendar._is_conflicting(self, appointment):
+            raise ValueError(
+                appointment._name + " is in conflict with Calendar")
+
+        self._appointments.append(appointment)
+
 def main():
     """Quick tests."""
     pass

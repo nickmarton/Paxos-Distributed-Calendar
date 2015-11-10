@@ -59,6 +59,8 @@ class Appointment(object):
 
     def __eq__(self, other):
         """Determine if two Appointment objects are equivalent."""
+        if not hasattr(other, "is_Appointment"):
+            raise TypeError("both operands must be Appointment objects.")
 
         c_name = self._name == other._name
         c_day = self._day == other._day
@@ -90,7 +92,7 @@ class Appointment(object):
     def _parse_time(time_string):
         """Return a time object from given string or raise exception."""
         #enforce string type
-        if not isinstance(time_string, str):
+        if not type(time_string) == str:
             raise TypeError("time parameters must be of type string.")
 
         #regex to determine if times provided are in correct format,
@@ -128,11 +130,11 @@ class Appointment(object):
         return time(hour, minutes)
 
     @staticmethod
-    def is_appointments_conflicting(appt1, appt2):
+    def _is_conflicting(appt1, appt2):
         """Determine if two Appointment objects are conflicting."""
         #ensure both args are of type Appointment
-        appt1_cond = isinstance(appt1, Appointment)
-        appt2_cond = isinstance(appt1, Appointment)
+        appt1_cond = hasattr(appt1, "_is_Appointment")
+        appt2_cond = hasattr(appt2, "_is_Appointment")
 
         if not appt1_cond or not appt2_cond:
             raise TypeError("parameters must be of type Appointment")
