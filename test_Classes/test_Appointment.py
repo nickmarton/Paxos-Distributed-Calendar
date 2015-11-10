@@ -1,7 +1,7 @@
 """Test Appointment object."""
 
 import pytest
-from Paxos.Appointment import Appointment
+from Paxos.Classes.Appointment import Appointment
 
 def test___init__():
     """Test ."""

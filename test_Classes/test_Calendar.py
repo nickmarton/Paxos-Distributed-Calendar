@@ -1,7 +1,8 @@
 """Tests for Calendar."""
 
 import pytest
-from Paxos import Appointment, Calendar
+from Paxos.Classes.Appointment import Appointment
+from Paxos.Classes.Calendar import Calendar
 
 def test___init__():
     """Test ."""
