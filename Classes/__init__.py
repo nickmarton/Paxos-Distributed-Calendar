@@ -1,1 +1,1 @@
-"""Classes for Paxos Calendar."""
+"""Treat Paxos directory as a package."""

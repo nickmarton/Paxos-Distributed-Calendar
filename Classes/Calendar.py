@@ -27,12 +27,20 @@ class Calendar(object):
         for i, appt1 in enumerate(list(appointments)):
             for j, appt2 in enumerate(list(appointments)):
                 if i != j:
-                    if Appointment._is_appointments_conflicting(appt1, appt2):
+                    if Appointment._is_conflicting(appt1, appt2):
                         raise ValueError(
-                            "Appointments " + str(i) + " and " +
-                            str(j) + " are conflicting.")
+                            "Appointments \n" + str(appt1) + "\n and \n" +
+                            str(appt2) + "\n are conflicting.")
 
-        self._appointments = list(appointments)
+        #remove duplicates and set
+        l_appointments = list(appointments)
+        self._appointments = []
+
+        #loop through with list instead of set to keep order
+        for appointment in l_appointments:
+            if appointment not in self._appointments:
+                self._appointments.append(appointment)
+
         self._is_Calendar = True
 
     def __eq__(self, other):
@@ -65,21 +73,42 @@ class Calendar(object):
             return self._appointments[key]
         except TypeError:
             raise TypeError("Index must be an int")
-        except KeyError:
-            raise KeyError("invalid key: " + str(key))
+        except IndexError:
+            raise IndexError("invalid index: " + str(key))
 
     def __setitem__(self, key, value):
         """
         Implement Calendar[key] = value; needed to ensure no conflicts added.
         """
 
+        if not hasattr(value, "_is_Appointment"):
+            raise TypeError("value parameter must be an Appointment object")
+
         #Ensure valid key while setting
         try:
-            self._appointments[key] = value
+            self._appointments[key]
         except TypeError:
             raise TypeError("Index must be an int")
-        except KeyError:
-            raise KeyError("invalid key: " + str(key))
+        except IndexError:
+            raise IndexError("invalid index: " + str(key))
+
+        non_key_appts = []
+        for i, appt in enumerate(self._appointments):
+            if i != key:
+                non_key_appts.append(appt)
+
+        for appt in non_key_appts:
+            if Appointment._is_conflicting(value, appt):
+                raise ValueError(
+                    str(value) + "\n conflicts with \n" + str(appt) +
+                    "\n already in Calendar")
+        
+        for appt in non_key_appts:
+            if value == appt:
+                raise ValueError(
+                    "Cannot add duplicate Appointment to Calendar")
+
+        self._appointments[key] = value
 
     def __iter__(self):
         """Implement iterator for Calendar."""
@@ -88,7 +117,7 @@ class Calendar(object):
 
     def __contains__(self, item):
         """Implement "in" operator for Calendar object."""
-        for appointment in Calendar:
+        for appointment in self:
             if appointment == item:
                 return True
 
@@ -139,11 +168,12 @@ class Calendar(object):
         conflicting.
         """
 
-        if Calendar._is_conflicting(self, appointment):
+        if Calendar._is_appointment_conflicting(self, appointment):
             raise ValueError(
                 appointment._name + " is in conflict with Calendar")
 
-        self._appointments.append(appointment)
+        if appointment not in self:
+            self._appointments.append(appointment)
 
 def main():
     """Quick tests."""
