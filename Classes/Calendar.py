@@ -15,6 +15,11 @@ class Calendar(object):
         Raise TypeError if some provided arg is not of type Appointment.
         Raise ValueError if any two Appointment objects provided are
         conflicting.
+
+        self._appointments:     unordered set of Appointment objects; order of
+                                addition of appointment objects are tracked
+                                however for indexing, i.e.,
+                                Calendar[0] == [first appointment added]
         """
 
         #Enforce positional arguments as only consisting of Appointment objects
