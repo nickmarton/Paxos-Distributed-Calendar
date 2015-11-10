@@ -31,7 +31,7 @@ def test___init__():
 def test___eq__():
     """Test == operator for Appointment objects."""
     def test_TypeError(self, other):
-        """Test TypeError raising during Appointment object construction."""
+        """Test TypeError raising during == of Appointment objects."""
         with pytest.raises(TypeError) as excinfo:
             self == other
 
@@ -55,7 +55,7 @@ def test___eq__():
 def test___ne__():
     """Test == operator for Appointment objects."""
     def test_TypeError(self, other):
-        """Test TypeError raising during Appointment object construction."""
+        """Test TypeError raising during != of Appointment objects."""
         with pytest.raises(TypeError) as excinfo:
             self == other
 
@@ -96,11 +96,11 @@ def test__parse_time():
     from datetime import time
 
     def test_TypeError(time):
-        """Test TypeError raising during Appointment object construction."""
+        """Test TypeError raising during Appointment._parse_time()."""
         with pytest.raises(TypeError) as excinfo:
             Appointment._parse_time(time)
     def test_ValueError(time):
-        """Test ValueError raising during Appointment object construction."""
+        """Test ValueError raising during Appointment._parse_time()."""
         with pytest.raises(ValueError) as excinfo:
             Appointment._parse_time(time)    
 
@@ -128,7 +128,7 @@ def test__parse_time():
 def test__is_conflicting():
     """Test Appointment._is_conflicting() static function."""
     def test_TypeError(appt1, appt2):
-        """Test TypeError raising during Appointment object construction."""
+        """Test TypeError raising during Appointment._is_conflicting()."""
         with pytest.raises(TypeError) as excinfo:
             Appointment._is_conflicting(appt1, appt2)
 
