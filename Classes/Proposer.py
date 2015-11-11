@@ -11,6 +11,8 @@ class Proposer(object):
 
     def __init__(self, uid):
         """Construct Proposer object."""
+        if type(uid) != int:
+            raise TypeError("uid must be an integer")
 
-    self._uid = uid
-    self._current_proposal_number = uid
+        self._uid = uid
+        self._current_proposal_number = uid
