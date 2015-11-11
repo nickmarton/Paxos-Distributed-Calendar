@@ -34,10 +34,14 @@ class Node(object):
         self._proposer = Proposer(node_id)
         self._acceptor = Acceptor()
         self._log = []
+        self._is_Node = True
 
     @staticmethod
     def save(Node, path="./", filename="state.pkl"):
         """Save this Node's log and Acceptor to stable storage."""
+        if not hasattr(Node, "_is_Node"):
+            raise TypeError("Node parameter must be a Node object")
+
         if type(filename) != str or type(path) != str:
             raise TypeError("path and filename must be strings")
 
