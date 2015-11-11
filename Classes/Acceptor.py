@@ -22,3 +22,10 @@ class Acceptor(object):
         self._accNum = None
         self._accVal = None
         self._is_Acceptor = True
+
+def main():
+    """Quick tests."""
+    pass
+
+if __name__ == "__main__":
+    main()

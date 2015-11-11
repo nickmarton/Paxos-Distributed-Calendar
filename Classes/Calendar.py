@@ -1,11 +1,16 @@
 """Calendar class to wrap list of Appointments for Paxos Log Entries."""
 
-from Paxos.Classes.Appointment import Appointment
+from Appointment import Appointment
 
 class Calendar(object):
     """
     Calendar object to function as container of Appointment objects, which
     enforces logical rules of a calendar.
+
+    appointments:               unordered set of Appointment objects; order of
+                                addition of appointment objects are tracked
+                                however for indexing, i.e.,
+                                Calendar[0] == [first appointment added]
     """
 
     def __init__(self, *appointments):
@@ -15,11 +20,6 @@ class Calendar(object):
         Raise TypeError if some provided arg is not of type Appointment.
         Raise ValueError if any two Appointment objects provided are
         conflicting.
-
-        self._appointments:     unordered set of Appointment objects; order of
-                                addition of appointment objects are tracked
-                                however for indexing, i.e.,
-                                Calendar[0] == [first appointment added]
         """
 
         #Enforce positional arguments as only consisting of Appointment objects

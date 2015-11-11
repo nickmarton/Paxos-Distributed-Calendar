@@ -16,3 +16,10 @@ class Proposer(object):
 
         self._uid = uid
         self._current_proposal_number = uid
+
+def main():
+    """Quick tests."""
+    pass
+
+if __name__ == "__main__":
+    main()
