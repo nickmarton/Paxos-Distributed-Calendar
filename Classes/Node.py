@@ -1,5 +1,7 @@
 """Node (User) Class for Paxos Calendar."""
 
+import os
+import pickle
 from Appointment import Appointment
 from Calendar import Calendar
 from Proposer import Proposer
@@ -33,9 +35,62 @@ class Node(object):
         self._acceptor = Acceptor()
         self._log = []
 
+    @staticmethod
+    def save(Node, path="./", filename="state.pkl"):
+        """Save this Node's log and Acceptor to stable storage."""
+        if type(filename) != str or type(path) != str:
+            raise TypeError("path and filename must be strings")
+
+        if filename[-4:] != ".pkl":
+            raise ValueError("filename must have .pkl extension")
+
+        if not os.path.exists(path):
+            raise ValueError("path provided does not exist")
+
+        import pickle
+        with open(path + filename, 'w') as f:
+            state = (Node._node_id, Node._log, Node._acceptor)
+            pickle.dump(state, f)
+
+    @staticmethod
+    def load(path="./", filename="state.pkl"):
+        """
+        Load log and Acceptor from stable storage if path and filename exist.
+        """
+
+        def _rebuild_calendar(node, log):
+            """Rebuild the calendar of node by reconstructing it from log."""
+            pass
+
+        if type(filename) != str or type(path) != str:
+            raise TypeError("path and filename must be strings")
+
+        if filename[-4:] != ".pkl":
+            raise ValueError("filename must have .pkl extension")
+
+        if not os.path.exists(path+filename):
+            raise ValueError("path provided does not exist")
+
+        with open(path + filename, 'r') as f:
+            state = pickle.load(f)
+            node_id, log, acceptor = state
+            node = Node(node_id)
+            node._log = log
+            node._acceptor = acceptor
+            _rebuild_calendar(node, log)
+
+            return node
+
 def main():
     """Quick tests."""
     n = Node(0)
+    n._acceptor._maxPrepare = 10
+
+    Node.save(n)
+
+    nn = Node.load()
+    print nn._acceptor
+
 
 if __name__ == "__main__":
     main()

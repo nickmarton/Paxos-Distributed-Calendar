@@ -9,3 +9,4 @@
 * **Code**
     * All TCP/UDP stuff
     * Need to decide on how to structure Node, then Proposer and Acceptor will follow
+    * _rebuild_calendar() function in Node.load() needs to be finished
