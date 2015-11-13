@@ -54,7 +54,7 @@ class Appointment(object):
             raise ValueError("There must be at least 1 participant")
 
         self._name = name
-        self._day = day
+        self._day = day[0].upper() + day[1:].lower()
         self._start = start
         self._end = end
         self._participants = participants

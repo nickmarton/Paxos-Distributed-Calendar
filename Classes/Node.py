@@ -33,7 +33,7 @@ class Node(object):
         self._calendar = Calendar()
         self._proposer = Proposer(node_id)
         self._acceptor = Acceptor()
-        self._log = []
+        self._log = {}
         self._is_Node = True
 
     @staticmethod
@@ -64,7 +64,8 @@ class Node(object):
 
         def _rebuild_calendar(node, log):
             """Rebuild the calendar of node by reconstructing it from log."""
-            pass
+            #Get the latest entry in the log for most up-to-date Calendar
+            node._calendar = log[max(log.keys())]
 
         if type(filename) != str or type(path) != str:
             raise TypeError("path and filename must be strings")
@@ -90,11 +91,33 @@ def main():
     n = Node(0)
     n._acceptor._maxPrepare = 10
 
+    a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 3])
+    a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
+    a3 = Appointment("lol","saturday","11:30am","12:30pm", [1])
+    a4 = Appointment("yeee","MondAy","11:30am","12:30pm", [1])
+    a5 = Appointment("fuuuuuuu","TUESDAY","11:30am","12:30pm", [1])
+    a6 = Appointment("paxos","ThUrSday","11:30am","12:30pm", [1])
+    a7 = Appointment("ddddd","sunday","11:30am","12:30pm", [1])
+    c1 = Calendar(a1,)
+    c2 = Calendar(a1, a2)
+    c3 = Calendar(a1, a2, a3)
+    c3 = Calendar(a1, a2, a3)
+    c4 = Calendar(a1, a2, a3, a4)
+    c5 = Calendar(a1, a2, a3, a4, a5)
+    c6 = Calendar(a1, a2, a3, a4, a5, a6)
+    c7 = Calendar(a1, a2, a3, a4, a5, a6, a7)
+
+    n._log[0] = c1
+    n._log[1] = c2
+    n._log[2] = c3
+    n._log[3] = c4
+    n._log[4] = c5
+    n._log[5] = c6
+    n._log[6] = c7
+
     Node.save(n)
 
     nn = Node.load()
-    print nn._acceptor
-
 
 if __name__ == "__main__":
     main()

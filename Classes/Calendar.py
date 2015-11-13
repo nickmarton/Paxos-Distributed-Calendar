@@ -197,6 +197,17 @@ class Calendar(object):
 
         return False
 
+    def __str__(self):
+        """Implement str(Calendar) ofr Calendar object."""
+        ret_str = "Calendar:\n"
+        for appointment in sorted(self, key=lambda x: x._name):
+            ret_str += '\t' + str(appointment) + '\n'
+        return ret_str
+
+    def __repr__(self):
+        """Implement repr(Calendar)."""
+        return self.__str__()
+
 def main():
     """Quick tests."""
     pass

@@ -8,6 +8,3 @@
     * Node needs attributes "log" and "calendar"
 * **Code**
     * All TCP/UDP stuff
-    * Need to decide on how to structure Node, then Proposer and Acceptor will follow
-    * _rebuild_calendar() function in Node.load() needs to be finished
-    * log may need to be a dict if we're using slots
