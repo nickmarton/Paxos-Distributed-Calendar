@@ -197,6 +197,10 @@ class Calendar(object):
 
         return False
 
+    def get_appointment_names(self):
+        """Return sorted list of Appointment names in this Calendar object."""
+        return sorted([appt._name for appt in self._appointments])
+
     def __str__(self):
         """Implement str(Calendar) ofr Calendar object."""
         ret_str = "Calendar:\n"

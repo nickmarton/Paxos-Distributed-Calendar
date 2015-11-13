@@ -113,31 +113,65 @@ class Node(object):
     def _parse_command(command, node):
         """Parse command priovided, possibly involving provided node."""
         
-        def _do_show(argv):
+        def _do_show(argv, node):
             """Perform show command for debugging/user information."""
+            #Handle showing the calendar
             if argv[1] == "calendar":
                 print node._calendar
+            
+            #Handle showing the log
             elif argv[1] == "log":
+
+                print "Log:"
+                #copy the log into a list ordered by slot number
+                ordered_slots = sorted(node._log.items(), key=lambda x: x[0])
+                
+                #if -short flag not thrown, print entire log
                 if len(argv) == 2:
-                    print node._log
+                    for slot in ordered_slots:
+                        print "Slot " + str(slot[0]) + ' ' + str(slot[1])
+                #Short flag is thrown, just print names of Appointments in each
+                #Calendar slot
                 elif len(argv) == 3:
                     if argv[2] == "-s":
-                        print "short"
+                        for slot in ordered_slots:
+                            log_string = "Slot " + str(slot[0]) + " Calendar: \t"
+                            log_string += ', '.join(
+                                slot[1].get_appointment_names())
+                            print log_string
+                        print
                     else:
                         raise IndexError(
-                            "Invalid command; Only flags \"-s\" permitted")
+                            "Invalid show arguments; Only flags \"-s\" "
+                            "permitted")
+                #Bad number of arguments to show log
                 else:
                     raise IndexError(
-                        "Invalid command; show log supports only a single "
-                        "optional flag argument \"-s\"")
+                        "Invalid show arguments; show log supports only a "
+                        "single optional flag argument \"-s\"")
+            #Handle showing Node's Acceptor object
+            elif argv[1] == "acceptor":
+                print str(node._acceptor) + '\n'
+            #Handle showing Node's Proposer object
+            elif argv[1] == "proposer":
+                print str(node._proposer) + '\n'
+            #Handle printing entire state of Node
+            elif argv[1] == "all":
+                print "-" * 100
+                print "Node ID: " + str(node._node_id)
+                _do_show(['show', 'calendar'], node)
+                _do_show(['show', 'log', '-s'], node)
+                _do_show(['show', 'acceptor'], node)
+                _do_show(['show', 'proposer'], node)
+                print "-" * 100
             else:
                 raise IndexError(
-                    "Invalid command; show needs argument {calendar,log}")
+                    "Invalid show argument; show needs argument {calendar,log,acceptor,proposer,all}")
 
         argv = command.split()
         if argv[0] == "show":
             try:
-                _do_show(argv)
+                _do_show(argv, node)
             except IndexError as excinfo:
                 print excinfo
 

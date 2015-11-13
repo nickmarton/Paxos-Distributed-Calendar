@@ -17,6 +17,16 @@ class Proposer(object):
         self._uid = uid
         self._current_proposal_number = uid
 
+    def __str__(self):
+        """Implement str(Proposer)."""
+        ret_str = "Proposer:\n\tUnique ID: " + str(self._uid) + '\n\t'
+        ret_str += "Current Proposal number: " + str(self._current_proposal_number)
+        return ret_str
+
+    def __repr__(self):
+        """Implement repr(Proposer)."""
+        return self.__str__()
+
 def main():
     """Quick tests."""
     pass
