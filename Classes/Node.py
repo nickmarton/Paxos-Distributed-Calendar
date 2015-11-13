@@ -1,7 +1,10 @@
 """Node (User) Class for Paxos Calendar."""
 
 import os
+import sys
+import thread
 import pickle
+import socket
 from Appointment import Appointment
 from Calendar import Calendar
 from Proposer import Proposer
@@ -86,10 +89,62 @@ class Node(object):
 
             return node
 
+    @staticmethod
+    def serve(conn, node):
+        """Have node provided serve some client connected through conn."""
+        while 1:
+            data = conn.recv(8192)
+
+            if not data:
+                print("Ended connection")
+                break
+
+            if data.decode("utf-8") == "terminate" or data.decode("utf-8") == "quit":
+                print("Ending connection with client")
+                conn.close()
+                break
+
+            print data
+            conn.send(b'ACK ' + data)
+
+        conn.close()
+
+    @staticmethod
+    def _parse_command(command, node):
+        """Parse command priovided, possibly involving provided node."""
+        
+        def _do_show(argv):
+            """Perform show command for debugging/user information."""
+            if argv[1] == "calendar":
+                print node._calendar
+            elif argv[1] == "log":
+                if len(argv) == 2:
+                    print node._log
+                elif len(argv) == 3:
+                    if argv[2] == "-s":
+                        print "short"
+                    else:
+                        raise IndexError(
+                            "Invalid command; Only flags \"-s\" permitted")
+                else:
+                    raise IndexError(
+                        "Invalid command; show log supports only a single "
+                        "optional flag argument \"-s\"")
+            else:
+                raise IndexError(
+                    "Invalid command; show needs argument {calendar,log}")
+
+        argv = command.split()
+        if argv[0] == "show":
+            try:
+                _do_show(argv)
+            except IndexError as excinfo:
+                print excinfo
+
 def main():
     """Quick tests."""
-    n = Node(0)
-    n._acceptor._maxPrepare = 10
+    N = Node(0)
+    N._acceptor._maxPrepare = 10
 
     a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 3])
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
@@ -98,7 +153,7 @@ def main():
     a5 = Appointment("fuuuuuuu","TUESDAY","11:30am","12:30pm", [1])
     a6 = Appointment("paxos","ThUrSday","11:30am","12:30pm", [1])
     a7 = Appointment("ddddd","sunday","11:30am","12:30pm", [1])
-    c1 = Calendar(a1,)
+    c1 = Calendar(a1)
     c2 = Calendar(a1, a2)
     c3 = Calendar(a1, a2, a3)
     c3 = Calendar(a1, a2, a3)
@@ -106,18 +161,57 @@ def main():
     c5 = Calendar(a1, a2, a3, a4, a5)
     c6 = Calendar(a1, a2, a3, a4, a5, a6)
     c7 = Calendar(a1, a2, a3, a4, a5, a6, a7)
+    #'''
+    N._log[0] = c1
+    N._log[1] = c2
+    N._log[2] = c3
+    N._log[3] = c4
+    N._log[4] = c5
+    N._log[5] = c6
+    N._log[6] = c7
+    Node.save(N)
+    #'''
+    
 
-    n._log[0] = c1
-    n._log[1] = c2
-    n._log[2] = c3
-    n._log[3] = c4
-    n._log[4] = c5
-    n._log[5] = c6
-    n._log[6] = c7
+    #try to load a previous state of this Node
+    try:
+        N = Node.load()
+    except ValueError:
+        pass
+    except IOError:
+        pass
 
-    Node.save(n)
+    HOST = "192.168.1.214"
+    PORT = 9000
+    #HOST = "0.0.0.0"
+    #PORT = int(sys.argv[2])
 
-    nn = Node.load()
+    #bind to host of 0.0.0.0 for any TCP traffic through AWS
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((HOST, PORT))
+    #backlog to; 1 for each process
+    sock.listen(4)
+
+    import select
+    print("@> Node Started")
+    while True:
+        r, w, x = select.select([sys.stdin, sock], [], [])
+        if not r:
+            continue
+        #If user entered something in stdin, serve them
+        if r[0] is sys.stdin:
+            message = raw_input('')
+            if message == "quit":
+                Node.save(N)
+                break
+            else:
+                Node._parse_command(message, N)
+        #if incoming IP connection, serve that client
+        else:
+            conn, addr = sock.accept()
+            print ('Connected with ' + addr[0] + ':' + str(addr[1]))
+            thread.start_new_thread(Node.serve, (conn, N))
+    sock.close()
 
 if __name__ == "__main__":
     main()
