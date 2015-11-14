@@ -6,7 +6,7 @@ import thread
 import socket
 import select
 
-def send_election_messages(node):
+def _send_election_messages(node):
     """Send election messages to all Node's with higher IDs than this one."""
     #send election message to all higher ID processes
     time.sleep(1)
@@ -16,13 +16,13 @@ def send_election_messages(node):
             thread.start_new_thread(
                 _send_message, (node._node_id, IP, PORT, "Election"))
 
-def send_okay_message(node, ID):
+def _send_okay_message(node, ID):
     """Send OKAY message to the Node object with IP, PORT."""
     IP, PORT = node._ip_table[ID]
     thread.start_new_thread(
         _send_message, (node._node_id, IP, PORT, "OKAY"))
 
-def send_coordinator_messages(node):
+def _send_coordinator_messages(node):
     """Send Coordinator nmessage to all Node's except this one."""
     for ID, ip_info in node._ip_table.items():
         IP, PORT = ip_info
@@ -48,17 +48,19 @@ def _send_message(ID, IP, PORT, msg):
     except socket.error:
         pass
 
-def leader_election(node, recv_socket):
+def leader_election(node, recv_socket, timeout):
     """Perform Bully Algorithm to elect a leader among the Nodes."""
     #Send initial election messages
-    thread.start_new_thread(send_election_messages, (node,))
+    thread.start_new_thread(_send_election_messages, (node,))
     
-    #Wait for messages
     received_okay = False
+    #Wait for messages
     while True:
 
-        r, w, x = select.select([recv_socket], [], [], 6)
+        #poll on recv_socket waiting for message or timeout
+        r, w, x = select.select([recv_socket], [], [], timeout)
 
+        #if a message was received, interpret it
         if r:
             #Accept any incoming connections and receive their messages,
             #unpickling the ID-message 2-tuple
@@ -71,23 +73,23 @@ def leader_election(node, recv_socket):
                 node._leader = ID
                 break
 
-
             #Respond to election if message received from higher ID
             if message == "Election":
                 if ID < node._node_id:
-                    send_okay_message(node, ID)
-                    thread.start_new_thread(send_election_messages, (node,))
+                    _send_okay_message(node, ID)
+                    thread.start_new_thread(_send_election_messages, (node,))
                     continue
-
 
             #If message is OKAY, wait for a while then do leader election again
             if message == "OKAY":
                 received_okay = True
                 continue
+        #timeout, this Node is either the new leader or has received an OKAY 
+        #from another Node
         else:
-            #if it's been a certain amount of time and no OKAY's received,
-            #we're the leader, send Coordinator to everyone
+            #If this Node hasn't received an OKAY, it is the new leader, send
+            #Coordinator message to everyone else
             if not received_okay:
-                send_coordinator_messages(node)
+                _send_coordinator_messages(node)
                 node._leader = node._node_id
                 break

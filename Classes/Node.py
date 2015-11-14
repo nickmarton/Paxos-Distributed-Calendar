@@ -332,17 +332,17 @@ def main():
     except IOError:
         pass
 
-    ip_table = N._ip_table
-    HOST, PORT = ip_table[N._node_id]
-
     recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    recv_socket.bind(("0.0.0.0", PORT))
+    recv_socket.bind(("0.0.0.0", N._ip_table[N._node_id][1]))
     #backlog; 1 for each Node besides self
     recv_socket.listen(4)
 
+    poll_time = 10
+    timeout = 5
+
     while True:
-        thread.start_new_thread(leader_election, (N, recv_socket))
-        time.sleep(12)
+        thread.start_new_thread(leader_election, (N, recv_socket, timeout))
+        time.sleep(poll_time)
         print "NEW LEADER IS: " + str(N._leader)
 
     recv_socket.close()
