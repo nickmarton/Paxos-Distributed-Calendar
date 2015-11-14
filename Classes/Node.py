@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 import thread
 import pickle
 import socket
@@ -45,6 +46,7 @@ class Node(object):
         self._proposer = Proposer(node_id)
         self._acceptor = Acceptor()
         self._log = {}
+        self._leader = None
         self._is_Node = True
 
     def insert(self, appointment):
@@ -304,7 +306,7 @@ def main():
     "cancel xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
     "schedule zo (user1,user2,user3) (12:30pm,1:30pm) Friday"
 
-    N = Node(0)
+    N = Node(int(sys.argv[1]))
 
     a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 3])
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
@@ -330,9 +332,20 @@ def main():
     except IOError:
         pass
 
-    thread.start_new_thread(leader_election, (N,))
-    import time
-    time.sleep(10)
+    ip_table = N._ip_table
+    HOST, PORT = ip_table[N._node_id]
+
+    recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    recv_socket.bind(("0.0.0.0", PORT))
+    #backlog; 1 for each Node besides self
+    recv_socket.listen(4)
+
+    while True:
+        thread.start_new_thread(leader_election, (N, recv_socket))
+        time.sleep(12)
+        print "NEW LEADER IS: " + str(N._leader)
+
+    recv_socket.close()
 
     '''
     HOST = "192.168.1.214"
