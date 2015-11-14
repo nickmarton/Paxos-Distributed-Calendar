@@ -115,6 +115,11 @@ class Node(object):
         
         def _do_show(argv, node):
             """Perform show command for debugging/user information."""
+            if len(argv) == 1:
+                raise ValueError(
+                    "Invalid show argument; show needs argument "
+                    "{calendar,log,acceptor,proposer,all}")
+
             #Handle showing the calendar
             if argv[1] == "calendar":
                 print node._calendar
@@ -141,12 +146,12 @@ class Node(object):
                             print log_string
                         print
                     else:
-                        raise IndexError(
+                        raise ValueError(
                             "Invalid show arguments; Only flags \"-s\" "
                             "permitted")
                 #Bad number of arguments to show log
                 else:
-                    raise IndexError(
+                    raise ValueError(
                         "Invalid show arguments; show log supports only a "
                         "single optional flag argument \"-s\"")
             #Handle showing Node's Acceptor object
@@ -165,18 +170,65 @@ class Node(object):
                 _do_show(['show', 'proposer'], node)
                 print "-" * 100
             else:
-                raise IndexError(
-                    "Invalid show argument; show needs argument {calendar,log,acceptor,proposer,all}")
+                raise ValueError(
+                    "Invalid show argument; show needs argument "
+                    "{calendar,log,acceptor,proposer,all}")
+
+        def _parse_appointment(argv):
+            """Try to parse an Appointment object from given argv."""
+            generic_error_msg = "Invalid command; Schedule and cancel " + \
+                    "commands must be of form: \n" + \
+                    "{schedule,cancel} [Appointment name] " + \
+                    "(user1,user2,...usern) (start_time,end_time) [day]"
+
+            if len(argv) != 5:
+                raise ValueError(generic_error_msg)
+            
+            name, participants, times, day = argv[1:]
+            participants = participants[1:-1].split(",")
+            try:
+                participants = [int(user[4:]) for user in participants]
+            except ValueError:
+                raise ValueError(
+                    "Invalid command; participants must be of form "
+                    "(user1,user2,...,usern)")
+            try:
+                start, end = times[1:-1].split(',')
+            except ValueError:
+                raise ValueError(
+                    "Invalid command; times must be of form "
+                    "(start_time,end_time)")
+
+            try:
+                return Appointment(name, day, start, end, participants)
+            except ValueError as excinfo:
+                raise ValueError("Invalid command; " + excinfo.message)
 
         argv = command.split()
+
+        if not argv:
+            return
+        #If command was to show something, do show
         if argv[0] == "show":
             try:
                 _do_show(argv, node)
-            except IndexError as excinfo:
+            except ValueError as excinfo:
                 print excinfo
+                print
+        #If command is to schedule or cancel an Appointment, parse then
+        #initiate Synod algorithm
+        if argv[0] == "schedule" or argv[0] == "cancel":
+            try:
+                appointment = _parse_appointment(argv)
+                print appointment
+            except ValueError as excinfo:
+                print excinfo
+                print
 
 def main():
     """Quick tests."""
+    "schedule yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
+
     N = Node(0)
     N._acceptor._maxPrepare = 10
 
