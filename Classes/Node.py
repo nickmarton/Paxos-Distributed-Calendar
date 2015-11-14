@@ -9,6 +9,7 @@ from Appointment import Appointment
 from Calendar import Calendar
 from Proposer import Proposer
 from Acceptor import Acceptor
+from Bully import leader_election
 
 class Node(object):
     """
@@ -25,6 +26,8 @@ class Node(object):
                     of log
     """
 
+    _ip_filename = "./IP_translations.txt"
+
     def __init__(self, node_id):
         """Construct a Node object."""
         if type(node_id) != int:
@@ -32,12 +35,44 @@ class Node(object):
         if node_id < 0:
             raise ValueError("node id must be a nonnegative integer")
 
+        try:
+            Node._ip_table = Node._make_ip_table()
+        except IOError:
+            raise IOError("Node-to-IP translation file: " + ip_filename + " not found.")
+
         self._node_id = node_id
         self._calendar = Calendar()
         self._proposer = Proposer(node_id)
         self._acceptor = Acceptor()
         self._log = {}
         self._is_Node = True
+
+    def insert(self, appointment):
+        """Insert an Appointment into this Node's Calendar."""
+        print "IN INSERT"
+
+    def delete(self, appointment):
+        """Delete an Appointment in this Node's Calendar."""
+        print "IN DELETE"
+
+    @staticmethod
+    def _make_ip_table():
+        """Create the ID-to-IP translation table used for socket connection."""
+        table = {}
+
+        import re
+        pattern = r"^\d+,\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3},\d{4}$"
+        with open(Node._ip_filename, "r") as f:
+                for translation in f:
+                    match = re.match(pattern, translation.strip())
+                    if not match:
+                        raise ValueError(
+                            "Every line in IP_translations.txt must be of "
+                            "form ID,IP")
+                    ID, IP, PORT = translation.strip().split(',')
+                    table[int(ID)] = [IP, int(PORT)]
+
+        return table
 
     @staticmethod
     def save(Node, path="./", filename="state.pkl"):
@@ -209,7 +244,22 @@ class Node(object):
         if argv[0] == "schedule":
             try:
                 appointment = _parse_appointment(argv)
-                print appointment
+
+                #determine if the Appointment the user is trying to schedule
+                #is already in their Calendar or in conflict with some
+                #Appointment in their Calendar
+                conflict_cond = node._calendar._is_appointment_conflicting(
+                                                                appointment)
+                in_cond = appointment in node._calendar
+
+                #if it's not already in the Calendar and not in conflict with
+                #any Appointment in it, begin Synod
+                if not conflict_cond and not in_cond:
+                    node.insert(appointment)
+                else:
+                    print "User scheduled appointment already in their " + \
+                            "own Calendar or in conflict with their own " + \
+                            "Calendar; ignoring.\n"
             except ValueError as excinfo:
                 print excinfo
                 print
@@ -217,7 +267,11 @@ class Node(object):
         if argv[0] == "cancel":
             try:
                 appointment = _parse_appointment(argv)
-                print appointment
+                if appointment in node._calendar:
+                    node.delete(appointment)
+                else:
+                    print "User cancelled appointment not in their own " + \
+                                                        "Calendar; ignoring.\n"
             except ValueError as excinfo:
                 print excinfo
                 print
@@ -245,36 +299,28 @@ class Node(object):
 def main():
     """Quick tests."""
     "schedule yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
+    "cancel yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
+    "schedule xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
+    "cancel xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
+    "schedule zo (user1,user2,user3) (12:30pm,1:30pm) Friday"
 
     N = Node(0)
-    N._acceptor._maxPrepare = 10
 
     a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 3])
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
     a3 = Appointment("lol","saturday","11:30am","12:30pm", [1])
     a4 = Appointment("yeee","MondAy","11:30am","12:30pm", [1])
-    a5 = Appointment("fuuuuuuu","TUESDAY","11:30am","12:30pm", [1])
-    a6 = Appointment("paxos","ThUrSday","11:30am","12:30pm", [1])
-    a7 = Appointment("ddddd","sunday","11:30am","12:30pm", [1])
+
     c1 = Calendar(a1)
     c2 = Calendar(a1, a2)
     c3 = Calendar(a1, a2, a3)
     c3 = Calendar(a1, a2, a3)
     c4 = Calendar(a1, a2, a3, a4)
-    c5 = Calendar(a1, a2, a3, a4, a5)
-    c6 = Calendar(a1, a2, a3, a4, a5, a6)
-    c7 = Calendar(a1, a2, a3, a4, a5, a6, a7)
-    #'''
+    
     N._log[0] = c1
     N._log[1] = c2
     N._log[2] = c3
     N._log[3] = c4
-    N._log[4] = c5
-    N._log[5] = c6
-    N._log[6] = c7
-    Node.save(N)
-    #'''
-    
 
     #try to load a previous state of this Node
     try:
@@ -284,17 +330,22 @@ def main():
     except IOError:
         pass
 
+    thread.start_new_thread(leader_election, (N,))
+    import time
+    time.sleep(10)
+
+    '''
     HOST = "192.168.1.214"
     PORT = 9000
     #HOST = "0.0.0.0"
     #PORT = int(sys.argv[2])
-
+    
     #bind to host of 0.0.0.0 for any TCP traffic through AWS
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((HOST, PORT))
     #backlog to; 1 for each process
     sock.listen(4)
-
+    
     import select
     print("@> Node Started")
     while True:
@@ -315,6 +366,6 @@ def main():
             print ('Connected with ' + addr[0] + ':' + str(addr[1]))
             thread.start_new_thread(Node.serve, (conn, N))
     sock.close()
-
+    '''
 if __name__ == "__main__":
     main()
