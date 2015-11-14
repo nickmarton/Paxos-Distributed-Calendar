@@ -90,28 +90,8 @@ class Node(object):
             return node
 
     @staticmethod
-    def serve(conn, node):
-        """Have node provided serve some client connected through conn."""
-        while 1:
-            data = conn.recv(8192)
-
-            if not data:
-                print("Ended connection")
-                break
-
-            if data.decode("utf-8") == "terminate" or data.decode("utf-8") == "quit":
-                print("Ending connection with client")
-                conn.close()
-                break
-
-            print data
-            conn.send(b'ACK ' + data)
-
-        conn.close()
-
-    @staticmethod
     def _parse_command(command, node):
-        """Parse command priovided, possibly involving provided node."""
+        """Parse command provided, possibly involving provided node."""
         
         def _do_show(argv, node):
             """Perform show command for debugging/user information."""
@@ -204,10 +184,18 @@ class Node(object):
             except ValueError as excinfo:
                 raise ValueError("Invalid command; " + excinfo.message)
 
+        def _do_clear():
+            """Perform clear command via ASCI escape code."""
+            print(chr(27) + "[2J")
+
         argv = command.split()
 
         if not argv:
             return
+
+        if argv[0] == "clear":
+            _do_clear()
+
         #If command was to show something, do show
         if argv[0] == "show":
             try:
@@ -215,15 +203,44 @@ class Node(object):
             except ValueError as excinfo:
                 print excinfo
                 print
+
         #If command is to schedule or cancel an Appointment, parse then
         #initiate Synod algorithm
-        if argv[0] == "schedule" or argv[0] == "cancel":
+        if argv[0] == "schedule":
             try:
                 appointment = _parse_appointment(argv)
                 print appointment
             except ValueError as excinfo:
                 print excinfo
                 print
+
+        if argv[0] == "cancel":
+            try:
+                appointment = _parse_appointment(argv)
+                print appointment
+            except ValueError as excinfo:
+                print excinfo
+                print
+
+    @staticmethod
+    def serve(conn, node):
+        """Have node provided serve some client connected through conn."""
+        while 1:
+            data = conn.recv(8192)
+
+            if not data:
+                print("Ended connection")
+                break
+
+            if data.decode("utf-8") == "terminate" or data.decode("utf-8") == "quit":
+                print("Ending connection with client")
+                conn.close()
+                break
+
+            print data
+            conn.send(b'ACK ' + data)
+
+        conn.close()
 
 def main():
     """Quick tests."""
