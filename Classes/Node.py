@@ -7,11 +7,11 @@ import thread
 import pickle
 import socket
 import logging
+from Bully import bully_algorithm
 from Appointment import Appointment
 from Calendar import Calendar
 from Proposer import Proposer
 from Acceptor import Acceptor
-from Bully import bully_algorithm
 
 class Node(object):
     """
@@ -23,9 +23,12 @@ class Node(object):
     proposer:       Proposer object used in Synod Algorithm; passed node_id so
                     it can create unique proposal numbers.
     acceptor:       Acceptor object used in Synod Algorithm.
-    log:            List of Calendar objects used in full Paxos Algorithm;
+    log:            Dictionary of Calendar objects used in Paxos Algorithm;
                     intially empty, Synod Algorithm is used to fill each entry
-                    of log
+                    of log where integer keys represents slots and the values
+                    being the Calendar agreed upon via conscensus.
+    leader:         The current leader elected via the bully algorithm;
+                    initially None and updated every ~6 seconds.
     """
 
     _ip_filename = "./IP_translations.txt"
@@ -77,25 +80,6 @@ class Node(object):
         thread.start_new_thread(_do_leader_election, (self, poll_time, timeout))
 
     @staticmethod
-    def _make_ip_table():
-        """Create the ID-to-IP translation table used for socket connection."""
-        table = {}
-
-        import re
-        pattern = r"^\d+,\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3},\d{4}$"
-        with open(Node._ip_filename, "r") as f:
-                for translation in f:
-                    match = re.match(pattern, translation.strip())
-                    if not match:
-                        raise ValueError(
-                            "Every line in IP_translations.txt must be of "
-                            "form ID,IP")
-                    ID, IP, PORT = translation.strip().split(',')
-                    table[int(ID)] = [IP, int(PORT)]
-
-        return table
-
-    @staticmethod
     def save(Node, path="./", filename="state.pkl"):
         """Save this Node's log and Acceptor to stable storage."""
         if not hasattr(Node, "_is_Node"):
@@ -144,6 +128,25 @@ class Node(object):
             _rebuild_calendar(node, log)
 
             return node
+
+    @staticmethod
+    def _make_ip_table():
+        """Create the ID-to-IP translation table used for socket connection."""
+        table = {}
+
+        import re
+        pattern = r"^\d+,\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3},\d{4}$"
+        with open(Node._ip_filename, "r") as f:
+                for translation in f:
+                    match = re.match(pattern, translation.strip())
+                    if not match:
+                        raise ValueError(
+                            "Every line in IP_translations.txt must be of "
+                            "form ID,IP")
+                    ID, IP, PORT = translation.strip().split(',')
+                    table[int(ID)] = [IP, int(PORT)]
+
+        return table
 
     @staticmethod
     def _parse_command(command, node):
@@ -318,6 +321,7 @@ class Node(object):
 
         conn.close()
 
+
 def set_verbosity(verbose_level=3):
     """Set the level of verbosity of the Preprocessing."""
     if not type(verbose_level) == int:
@@ -353,7 +357,6 @@ def main():
 
     c1 = Calendar(a1)
     c2 = Calendar(a1, a2)
-    c3 = Calendar(a1, a2, a3)
     c3 = Calendar(a1, a2, a3)
     c4 = Calendar(a1, a2, a3, a4)
     

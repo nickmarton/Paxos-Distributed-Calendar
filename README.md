@@ -7,4 +7,7 @@
     * updates according to constructors of Proposer and Acceptor
     * Node needs attributes "log" and "calendar"
 * **Code**
-    * All TCP/UDP stuff
+    * Synod Algorithm
+        * Node passing to Proposer/Acceptors
+        * UDP setup/tear down
+        * Proposer/Acceptor functions
