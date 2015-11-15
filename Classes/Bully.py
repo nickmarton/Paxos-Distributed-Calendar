@@ -9,7 +9,7 @@ import select
 def _send_election_messages(node):
     """Send election messages to all Node's with higher IDs than this one."""
     #send election message to all higher ID processes
-    time.sleep(1)
+    time.sleep(0.10)
     for ID, ip_info in node._ip_table.items():
         IP, PORT = ip_info
         if ID > node._node_id:
@@ -48,7 +48,7 @@ def _send_message(ID, IP, PORT, msg):
     except socket.error:
         pass
 
-def leader_election(node, recv_socket, timeout):
+def bully_algorithm(node, recv_socket, timeout):
     """Perform Bully Algorithm to elect a leader among the Nodes."""
     #Send initial election messages
     thread.start_new_thread(_send_election_messages, (node,))

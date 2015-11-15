@@ -6,11 +6,12 @@ import time
 import thread
 import pickle
 import socket
+import logging
 from Appointment import Appointment
 from Calendar import Calendar
 from Proposer import Proposer
 from Acceptor import Acceptor
-from Bully import leader_election
+from Bully import bully_algorithm
 
 class Node(object):
     """
@@ -56,6 +57,24 @@ class Node(object):
     def delete(self, appointment):
         """Delete an Appointment in this Node's Calendar."""
         print "IN DELETE"
+
+    def elect_leader(self, poll_time=6, timeout=3):
+        """Engage this Node in leader selection."""
+        def _do_leader_election(self, poll_time, timeout):
+            """Do leader election as new thread."""
+            recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            recv_socket.bind(("0.0.0.0", self._ip_table[self._node_id][1]))
+            #backlog; 1 for each Node besides self
+            recv_socket.listen(4)
+
+            while True:
+                thread.start_new_thread(bully_algorithm, (self, recv_socket, timeout))
+                time.sleep(poll_time)
+                logging.debug("NEW LEADER IS: " + str(self._leader))
+
+            recv_socket.close()
+
+        thread.start_new_thread(_do_leader_election, (self, poll_time, timeout))
 
     @staticmethod
     def _make_ip_table():
@@ -230,6 +249,7 @@ class Node(object):
         if not argv:
             return
 
+        #If command is to clear, clear the screen
         if argv[0] == "clear":
             _do_clear()
 
@@ -298,6 +318,26 @@ class Node(object):
 
         conn.close()
 
+def set_verbosity(verbose_level=3):
+    """Set the level of verbosity of the Preprocessing."""
+    if not type(verbose_level) == int:
+        raise TypeError("verbose_level must be an int")
+
+    if verbose_level < 0 or verbose_level > 4:
+        raise ValueError("verbose_level must be between 0 and 4")
+
+    verbosity = [
+        logging.CRITICAL,
+        logging.ERROR,
+        logging.WARNING,
+        logging.INFO,
+        logging.DEBUG]
+
+    logging.basicConfig(
+        format='%(asctime)s:\t %(message)s',
+        datefmt='%m/%d/%Y %I:%M:%S %p',
+        level=verbosity[verbose_level])
+
 def main():
     """Quick tests."""
     "schedule yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
@@ -305,8 +345,6 @@ def main():
     "schedule xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
     "cancel xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
     "schedule zo (user1,user2,user3) (12:30pm,1:30pm) Friday"
-
-    N = Node(int(sys.argv[1]))
 
     a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 3])
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
@@ -319,10 +357,15 @@ def main():
     c3 = Calendar(a1, a2, a3)
     c4 = Calendar(a1, a2, a3, a4)
     
+    set_verbosity(0)
+
+    N = Node(int(sys.argv[1]))
+
     N._log[0] = c1
     N._log[1] = c2
     N._log[2] = c3
     N._log[3] = c4
+    N._calendar = c4
 
     #try to load a previous state of this Node
     try:
@@ -332,53 +375,16 @@ def main():
     except IOError:
         pass
 
-    recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    recv_socket.bind(("0.0.0.0", N._ip_table[N._node_id][1]))
-    #backlog; 1 for each Node besides self
-    recv_socket.listen(4)
-
-    poll_time = 10
-    timeout = 5
-
-    while True:
-        thread.start_new_thread(leader_election, (N, recv_socket, timeout))
-        time.sleep(poll_time)
-        print "NEW LEADER IS: " + str(N._leader)
-
-    recv_socket.close()
-
-    '''
-    HOST = "192.168.1.214"
-    PORT = 9000
-    #HOST = "0.0.0.0"
-    #PORT = int(sys.argv[2])
+    N.elect_leader(poll_time=6, timeout=3)
     
-    #bind to host of 0.0.0.0 for any TCP traffic through AWS
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((HOST, PORT))
-    #backlog to; 1 for each process
-    sock.listen(4)
-    
-    import select
     print("@> Node Started")
     while True:
-        r, w, x = select.select([sys.stdin, sock], [], [])
-        if not r:
-            continue
-        #If user entered something in stdin, serve them
-        if r[0] is sys.stdin:
-            message = raw_input('')
-            if message == "quit":
-                Node.save(N)
-                break
-            else:
-                Node._parse_command(message, N)
-        #if incoming IP connection, serve that client
+        message = raw_input('')
+        if message == "quit":
+            Node.save(N)
+            break
         else:
-            conn, addr = sock.accept()
-            print ('Connected with ' + addr[0] + ':' + str(addr[1]))
-            thread.start_new_thread(Node.serve, (conn, N))
-    sock.close()
-    '''
+            Node._parse_command(message, N)
+
 if __name__ == "__main__":
     main()
