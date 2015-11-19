@@ -255,6 +255,7 @@ class Node(object):
         #If command is to clear, clear the screen
         if argv[0] == "clear":
             _do_clear()
+            return
 
         #If command was to show something, do show
         if argv[0] == "show":
@@ -263,6 +264,8 @@ class Node(object):
             except ValueError as excinfo:
                 print excinfo
                 print
+            finally:
+                return
 
         #If command is to schedule or cancel an Appointment, parse then
         #initiate Synod algorithm
@@ -288,6 +291,8 @@ class Node(object):
             except ValueError as excinfo:
                 print excinfo
                 print
+            finally:
+                return
 
         if argv[0] == "cancel":
             try:
@@ -300,27 +305,11 @@ class Node(object):
             except ValueError as excinfo:
                 print excinfo
                 print
+            finally:
+                return
 
-    @staticmethod
-    def serve(conn, node):
-        """Have node provided serve some client connected through conn."""
-        while 1:
-            data = conn.recv(8192)
-
-            if not data:
-                print("Ended connection")
-                break
-
-            if data.decode("utf-8") == "terminate" or data.decode("utf-8") == "quit":
-                print("Ending connection with client")
-                conn.close()
-                break
-
-            print data
-            conn.send(b'ACK ' + data)
-
-        conn.close()
-
+        print "Invalid command; supported commands = {clear,show,schedule,cancel}"
+        print
 
 def set_verbosity(verbose_level=3):
     """Set the level of verbosity of the Preprocessing."""
@@ -378,7 +367,7 @@ def main():
     except IOError:
         pass
 
-    N.elect_leader(poll_time=6, timeout=3)
+    #N.elect_leader(poll_time=6, timeout=3)
     
     print("@> Node Started")
     while True:

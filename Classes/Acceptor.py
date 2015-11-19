@@ -24,7 +24,10 @@ class Acceptor(object):
 
     def __str__(self):
         """Implement str(Acceptor)."""
-        return "Acceptor" + str((self._maxPrepare, self._accNum, self._accVal))
+        ret_str = "Acceptor\n\tMaxPrepare: " + str(self._maxPrepare)
+        ret_str += "\n\tAccNum: " + str(self._accNum)
+        ret_str += "\n\tAccVal: " + str(self._accVal)
+        return ret_str
 
     def __repr__(self):
         """Implement repr(Acceptor)."""
