@@ -79,6 +79,17 @@ class Node(object):
 
         thread.start_new_thread(_do_leader_election, (self, poll_time, timeout))
 
+    def synod(self):
+        """UPD server thread"""
+        UDP_IP = '0.0.0.0'
+        UPD_PORT = '9010'
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+        sock.bind((UDP_IP, UDP_PORT))
+        while True:
+            data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+            print "received message:", data
+
+            
     @staticmethod
     def save(Node, path="./", filename="state.pkl"):
         """Save this Node's log and Acceptor to stable storage."""
