@@ -11,26 +11,26 @@ def _send_election_messages(node):
     #send election message to all higher ID processes
     time.sleep(0.10)
     for ID, ip_info in node._ip_table.items():
-        IP, PORT = ip_info
+        IP, TCP_PORT, UDP_PORT = ip_info
         if ID > node._node_id:
             thread.start_new_thread(
-                _send_message, (node._node_id, IP, PORT, "Election"))
+                _send_message, (node._node_id, IP, TCP_PORT, "Election"))
 
 def _send_okay_message(node, ID):
     """Send OKAY message to the Node object with IP, PORT."""
-    IP, PORT = node._ip_table[ID]
+    IP, TCP_PORT, UDP_PORT = node._ip_table[ID]
     thread.start_new_thread(
-        _send_message, (node._node_id, IP, PORT, "OKAY"))
+        _send_message, (node._node_id, IP, TCP_PORT, "OKAY"))
 
 def _send_coordinator_messages(node):
     """Send Coordinator nmessage to all Node's except this one."""
     for ID, ip_info in node._ip_table.items():
-        IP, PORT = ip_info
+        IP, TCP_PORT, UDP_PORT = ip_info
 
         #Don't send to self
         if ID != node._node_id:
             thread.start_new_thread(
-                _send_message, (node._node_id, IP, PORT, "Coordinator"))
+                _send_message, (node._node_id, IP, TCP_PORT, "Coordinator"))
 
 def _send_message(ID, IP, PORT, msg):
     """Send "Election" message to Node at given IP and PORT."""

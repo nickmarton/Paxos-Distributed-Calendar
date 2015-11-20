@@ -65,9 +65,10 @@ class Node(object):
         """Engage this Node in Synod algorithm."""
         def _do_synod(self):
             """Do Synod algorithm for rhis Node."""
-            UDP_IP, UDP_PORT = '0.0.0.0', self._ip_table[self._node_id][2]
+            IP, UDP_PORT = '0.0.0.0', self._ip_table[self._node_id][2]
+            
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-            sock.bind((UDP_IP, UDP_PORT))
+            sock.bind((IP, UDP_PORT))
             while True:
                 data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
                 print "received message:", data
@@ -78,8 +79,10 @@ class Node(object):
         """Engage this Node in leader selection."""
         def _do_leader_election(self, poll_time, timeout):
             """Do leader election as new thread."""
+            IP, TCP_PORT = "0.0.0.0", self._ip_table[self._node_id][1]
+
             recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            recv_socket.bind(("0.0.0.0", self._ip_table[self._node_id][1]))
+            recv_socket.bind((IP, TCP_PORT))
             #backlog; 1 for each Node besides self
             recv_socket.listen(4)
 
@@ -380,7 +383,7 @@ def main():
     except IOError:
         pass
 
-    #N.elect_leader(poll_time=6, timeout=3)
+    N.elect_leader(poll_time=6, timeout=3)
     N.synod()
 
     print("@> Node Started")
