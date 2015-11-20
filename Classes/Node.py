@@ -79,9 +79,63 @@ class Node(object):
             sock.bind((IP, UDP_PORT))
             while True:
                 data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+                message_received = pickle.loads(data)
+                #the message recieved will always be a pickled tuple
                 print "received message:", pickle.loads(data)
-        
-        thread.start_new_thread(_do_synod, (self,))
+
+                message_type = message_received[0]
+                message_arguements = message_received[1:len(message_received)]
+                
+                if message_type == "accept":
+                    print "Accept message with these arguements", message_received[1:len(message_received)]
+                    if len(message_arguements) == 2:
+                        if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
+                        #self._acceptor._queue.append(message_received)
+                    else:
+                        print "First arguement must be of type Int and second arguement must be a calander"
+                    else:
+                        print "Inappropriate amount of arguements"
+                
+                elif message_type == "prepare":
+                    print "Prepare message with these arguements", message_received[1:len(message_received)]
+                    if len(message_arguements) == 1:
+                        if int(message_arguements[0]):
+                            #self._acceptor._queue.append(message_received)
+                        else:
+                            print "Arguements for Prepare must be of type Int"
+                    else:
+                        print "Inappropriate amount of arguements"
+                elif message_type == "commit":
+                    print "Commit message with these arguements", message_received[1:len(message_received)]
+                    if len(message_arguements) == 1:
+                        if message_arguements[0].hasattr("_is_Calendar"):
+                        #self._acceptor._queue.append(message_received)
+                        else:
+                            print " Arguement not of type calendar "
+                    else:
+                        print "Inappropriate amount of arguements"
+                elif message_type == "promsie":
+                    print "Promise message with these arguements", message_received[1:len(message_received)]
+                    #self._proposer._queue.append(message_received)
+                    if len(message_arguements) == 2:
+                        if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
+                            #self._proposer._queue.append(message_received)
+                        else:
+                            print "Arguements are of Inappropriate type"
+                    else:
+                        print "Inappropriate amount of arguements"
+                elif message_type == "ack":
+                    print "Ack message with these arguements", message_received[1:len(message_received)]
+                    if len(message_arguements) == 2 :
+                        if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
+                            #self._proposer._queue.append(message_received)
+                        else:
+                            print "Inappropriate arguement(s) type(s)"
+                    else:
+                        print "Inappropriate amount of arguements"
+                else:
+                    print " Invalid message type "
+         thread.start_new_thread(_do_synod, (self,))
 
     def elect_leader(self, poll_time=6, timeout=3):
         """Engage this Node in leader selection."""
