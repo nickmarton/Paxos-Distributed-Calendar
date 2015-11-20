@@ -75,6 +75,14 @@ class Node(object):
         
         thread.start_new_thread(_do_synod, (self,))
 
+    def UDP_client_thread(self, data, UDP_IP, UDP_PORT):
+        #pickle the data
+        transmission = pickle.dumps(data)
+        #create the socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        #send the tranmission
+        s.sendto(tranmission, (UDP_IP, UDP_PORT))
+        
     def elect_leader(self, poll_time=6, timeout=3):
         """Engage this Node in leader selection."""
         def _do_leader_election(self, poll_time, timeout):
