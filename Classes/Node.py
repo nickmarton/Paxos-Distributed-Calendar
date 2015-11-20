@@ -104,9 +104,9 @@ class Node(object):
                     print "Accept message with these arguements", message_received[1:len(message_received)]
                     if len(message_arguements) == 2:
                         if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
-                        #self._acceptor._queue.append(message_received)
-                    else:
-                        print "First arguement must be of type Int and second arguement must be a calander"
+                            pass#self._acceptor._queue.append(message_received)
+                        else:
+                            print "First arguement must be of type Int and second arguement must be a calander"
                     else:
                         print "Inappropriate amount of arguements"
                 
@@ -114,7 +114,7 @@ class Node(object):
                     print "Prepare message with these arguements", message_received[1:len(message_received)]
                     if len(message_arguements) == 1:
                         if int(message_arguements[0]):
-                            #self._acceptor._queue.append(message_received)
+                            pass#self._acceptor._queue.append(message_received)
                         else:
                             print "Arguements for Prepare must be of type Int"
                     else:
@@ -123,7 +123,7 @@ class Node(object):
                     print "Commit message with these arguements", message_received[1:len(message_received)]
                     if len(message_arguements) == 1:
                         if message_arguements[0].hasattr("_is_Calendar"):
-                        #self._acceptor._queue.append(message_received)
+                            pass#self._acceptor._queue.append(message_received)
                         else:
                             print " Arguement not of type calendar "
                     else:
@@ -133,7 +133,7 @@ class Node(object):
                     #self._proposer._queue.append(message_received)
                     if len(message_arguements) == 2:
                         if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
-                            #self._proposer._queue.append(message_received)
+                            pass#self._proposer._queue.append(message_received)
                         else:
                             print "Arguements are of Inappropriate type"
                     else:
@@ -142,7 +142,7 @@ class Node(object):
                     print "Ack message with these arguements", message_received[1:len(message_received)]
                     if len(message_arguements) == 2 :
                         if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
-                            #self._proposer._queue.append(message_received)
+                            pass#self._proposer._queue.append(message_received)
                         else:
                             print "Inappropriate arguement(s) type(s)"
                     else:
