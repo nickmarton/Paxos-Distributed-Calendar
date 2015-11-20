@@ -97,7 +97,6 @@ class Node(object):
                 #the message recieved will always be a pickled tuple
                 print "received message:", pickle.loads(data)
 
-<<<<<<< HEAD
                 message_type = message_received[0]
                 message_arguements = message_received[1:len(message_received)]
                 
@@ -150,10 +149,8 @@ class Node(object):
                         print "Inappropriate amount of arguements"
                 else:
                     print " Invalid message type "
-         thread.start_new_thread(_do_synod, (self,))
-=======
+
         thread.start_new_thread(_do_paxos, (self,))
->>>>>>> 5e1e1dcc487ac34839e8b482dc057e68f39cebe0
 
     def elect_leader(self, poll_time=6, timeout=3):
         """Engage this Node in leader selection."""

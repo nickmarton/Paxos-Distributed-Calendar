@@ -25,8 +25,8 @@ class Acceptor(object):
 
     def start(self):
         """Start the proposer; begin serving messages in the queue meant for Acceptor."""
-        print dir(self)
         while True:
+
             if self._queue:
                 message = self._queue.pop()
                 print message
