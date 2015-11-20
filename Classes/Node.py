@@ -61,6 +61,19 @@ class Node(object):
         """Delete an Appointment in this Node's Calendar."""
         print "IN DELETE"
 
+    def synod(self):
+        """Engage this Node in Synod algorithm."""
+        def _do_synod(self):
+            """Do Synod algorithm for rhis Node."""
+            UDP_IP, UDP_PORT = '0.0.0.0', self._ip_table[self._node_id][2]
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+            sock.bind((UDP_IP, UDP_PORT))
+            while True:
+                data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+                print "received message:", data
+        
+        thread.start_new_thread(_do_synod, (self,))
+
     def elect_leader(self, poll_time=6, timeout=3):
         """Engage this Node in leader selection."""
         def _do_leader_election(self, poll_time, timeout):
@@ -78,17 +91,6 @@ class Node(object):
             recv_socket.close()
 
         thread.start_new_thread(_do_leader_election, (self, poll_time, timeout))
-
-    def synod(self):
-        """UPD server thread"""
-        UDP_IP = '0.0.0.0'
-        UPD_PORT = '9010'
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-        sock.bind((UDP_IP, UDP_PORT))
-        while True:
-            data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-            print "received message:", data
-
             
     @staticmethod
     def save(Node, path="./", filename="state.pkl"):
@@ -146,7 +148,7 @@ class Node(object):
         table = {}
 
         import re
-        pattern = r"^\d+,\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3},\d{4}$"
+        pattern = r"^\d+,\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3},\d{4},\d{4}$"
         with open(Node._ip_filename, "r") as f:
                 for translation in f:
                     match = re.match(pattern, translation.strip())
@@ -154,8 +156,8 @@ class Node(object):
                         raise ValueError(
                             "Every line in IP_translations.txt must be of "
                             "form ID,IP")
-                    ID, IP, PORT = translation.strip().split(',')
-                    table[int(ID)] = [IP, int(PORT)]
+                    ID, IP, TCP_PORT, UDP_PORT,  = translation.strip().split(',')
+                    table[int(ID)] = [IP, int(TCP_PORT), int(UDP_PORT)]
 
         return table
 
@@ -379,7 +381,8 @@ def main():
         pass
 
     #N.elect_leader(poll_time=6, timeout=3)
-    
+    N.synod()
+
     print("@> Node Started")
     while True:
         message = raw_input('')
