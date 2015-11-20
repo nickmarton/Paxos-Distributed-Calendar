@@ -20,7 +20,7 @@ def main():
 		if message == "quit":
 			break
 		else:
-			UDP_transmission(message, UDP_IP, int(UDP_PORT))
+			UDP_transmission(tuple(message.split(" ")), UDP_IP, int(UDP_PORT))
 
 if __name__ == "__main__":
 	main()
