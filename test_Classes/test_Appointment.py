@@ -161,6 +161,22 @@ def test__is_conflicting():
     assert Appointment._is_conflicting(A1, A8)
     assert Appointment._is_conflicting(A8, A1)
 
+def test___deepcopy__():
+    """Test deepcopy for Appointment object."""
+    from copy import deepcopy
+    name, day, start, end, participants = "a", "Friday", "1:00pm", "2:00pm", [1]
+    A = Appointment(name, day, start, end, participants)
+    A_copy = deepcopy(A)
+    assert A_copy == A
+    assert A_copy is not A
+    A_copy._name = "lol"
+    assert A_copy._name != A._name
+    A_copy._day = "lol"
+    assert A_copy._day != A._day
+    A_copy._start is not A._start
+    A_copy._end is not A._end
+    A_copy._participants is not A._participants
+
 def test___str__():
     """Test str(Appointment)."""
     name, day, start, end, participants = "a", "Friday", "1:00pm", "2:00pm", [1]

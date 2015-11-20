@@ -162,6 +162,14 @@ class Calendar(object):
 
         return False
 
+    def __deepcopy__(self, memo):
+        """Implement copy.deepcopy for Calendar object."""
+        from copy import deepcopy
+        new_calendar = Calendar()
+        for appointment in self:
+            new_calendar += deepcopy(appointment)
+        return new_calendar
+
     def _is_appointment_conflicting(self, appointment):
         """
         Determine if Appointment object appointment conflicts with any

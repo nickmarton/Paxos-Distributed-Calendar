@@ -94,6 +94,9 @@ class Appointment(object):
     @staticmethod
     def _parse_time(time_string):
         """Return a time object from given string or raise exception."""
+        if isinstance(time_string, time):
+            from copy import deepcopy
+            return deepcopy(time_string)
         #enforce string type
         if not type(time_string) == str:
             raise TypeError("time parameters must be of type string.")
@@ -171,6 +174,13 @@ class Appointment(object):
 
         #if there's any overlap, they are in conflict
         return True
+
+    def __deepcopy__(self, memo):
+        """Implement copy.deepcopy for appointment object."""
+        from copy import deepcopy
+        return Appointment(
+            deepcopy(self._name), deepcopy(self._day), deepcopy(self._start),
+            deepcopy(self._end), deepcopy(self._participants))
 
     def __str__(self):
         """Convert event object to human readable string representation."""

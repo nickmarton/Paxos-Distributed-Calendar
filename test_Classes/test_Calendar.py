@@ -242,6 +242,24 @@ def test___contains__():
     assert a2 in c1
     assert a3 not in c1
 
+def test___deepcopy__():
+    """Implement copy.deepcopy for Calendar object."""
+    from copy import deepcopy
+    a1 = Appointment("yo","saturday","12:30pm","1:30pm", [1, 2, 3])
+    a2 = Appointment("yerboi","Friday","1:30am","11:30am", [1, 4, 5])
+    a3 = Appointment("we out here","Tuesday","11:30am","12:30pm", [1])
+    a4 = Appointment("bluv","Thursday","11:30am","12:30pm", [2, 6])
+
+    c = Calendar(a1, a2, a3, a4)
+    c_copy = deepcopy(c)
+    assert c == c_copy
+    assert c is not c_copy
+    appts = c._appointments
+    appts_copy = c_copy._appointments
+    for i in range(len(appts)):
+        assert appts[i] == appts_copy[i]
+        assert appts[i] is not appts_copy[i]
+
 def test__is_appointment_conflicting():
     """Test Calendar's _is_appointment_conflicting() function."""
     def test_TypeError(calendar, appointment):
