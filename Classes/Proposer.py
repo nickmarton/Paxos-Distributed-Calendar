@@ -16,6 +16,16 @@ class Proposer(object):
 
         self._uid = uid
         self._current_proposal_number = uid
+        self._queue = []
+
+    def start(self):
+        """Start the Proposer; serve messages in it's queue."""
+        while True:
+
+            if self._queue:
+                message = self._queue.pop()
+                print message
+
 
     def __str__(self):
         """Implement str(Proposer)."""

@@ -60,6 +60,11 @@ class Node(object):
         new_calendar += appointment
         print new_calendar
 
+        if self._node_id == self._leader:
+            pass
+        else:
+            pass
+
     def delete(self, appointment):
         """Delete an Appointment in this Node's Calendar."""
         from copy import deepcopy
@@ -69,10 +74,19 @@ class Node(object):
                 new_calendar += deepcopy(self_appointment)
         print new_calendar
 
-    def synod(self):
-        """Engage this Node in Synod algorithm."""
-        def _do_synod(self):
-            """Do Synod algorithm for rhis Node."""
+        if self._node_id == self._leader:
+            pass
+        else:
+            pass
+
+    def paxos(self):
+        """Engage this Node in Paxos algorithm."""
+        def _do_paxos(self):
+            """Do Paxos algorithm for this Node."""
+            #Begin running the Acceptor and Proposer in the background
+            thread.start_new_thread(self._acceptor.start, ())
+            thread.start_new_thread(self._proposer.start, ())
+
             IP, UDP_PORT = '0.0.0.0', self._ip_table[self._node_id][2]
             
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
@@ -83,6 +97,7 @@ class Node(object):
                 #the message recieved will always be a pickled tuple
                 print "received message:", pickle.loads(data)
 
+<<<<<<< HEAD
                 message_type = message_received[0]
                 message_arguements = message_received[1:len(message_received)]
                 
@@ -136,6 +151,9 @@ class Node(object):
                 else:
                     print " Invalid message type "
          thread.start_new_thread(_do_synod, (self,))
+=======
+        thread.start_new_thread(_do_paxos, (self,))
+>>>>>>> 5e1e1dcc487ac34839e8b482dc057e68f39cebe0
 
     def elect_leader(self, poll_time=6, timeout=3):
         """Engage this Node in leader selection."""
@@ -446,7 +464,7 @@ def main():
         pass
 
     #N.elect_leader(poll_time=6, timeout=3)
-    #N.synod()
+    N.paxos()
 
     print("@> Node Started")
     while True:

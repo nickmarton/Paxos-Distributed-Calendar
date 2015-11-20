@@ -20,7 +20,16 @@ class Acceptor(object):
         self._maxPrepare = -1
         self._accNum = None
         self._accVal = None
+        self._queue = []
         self._is_Acceptor = True
+
+    def start(self):
+        """Start the proposer; begin serving messages in the queue meant for Acceptor."""
+        print dir(self)
+        while True:
+            if self._queue:
+                message = self._queue.pop()
+                print message
 
     def __str__(self):
         """Implement str(Acceptor)."""
