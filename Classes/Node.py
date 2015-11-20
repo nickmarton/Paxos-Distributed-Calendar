@@ -55,11 +55,19 @@ class Node(object):
 
     def insert(self, appointment):
         """Insert an Appointment into this Node's Calendar."""
-        print "IN INSERT"
+        from copy import deepcopy
+        new_calendar = deepcopy(self._calendar)
+        new_calendar += appointment
+        print new_calendar
 
     def delete(self, appointment):
         """Delete an Appointment in this Node's Calendar."""
-        print "IN DELETE"
+        from copy import deepcopy
+        new_calendar = Calendar()
+        for self_appointment in self._calendar:
+            if self_appointment != appointment:
+                new_calendar += deepcopy(self_appointment)
+        print new_calendar
 
     def synod(self):
         """Engage this Node in Synod algorithm."""
@@ -71,18 +79,10 @@ class Node(object):
             sock.bind((IP, UDP_PORT))
             while True:
                 data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-                print "received message:", data
+                print "received message:", pickle.loads(data)
         
         thread.start_new_thread(_do_synod, (self,))
 
-    def UDP_client_thread(self, data, UDP_IP, UDP_PORT):
-        #pickle the data
-        transmission = pickle.dumps(data)
-        #create the socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        #send the tranmission
-        s.sendto(tranmission, (UDP_IP, UDP_PORT))
-        
     def elect_leader(self, poll_time=6, timeout=3):
         """Engage this Node in leader selection."""
         def _do_leader_election(self, poll_time, timeout):
@@ -391,8 +391,8 @@ def main():
     except IOError:
         pass
 
-    N.elect_leader(poll_time=6, timeout=3)
-    N.synod()
+    #N.elect_leader(poll_time=6, timeout=3)
+    #N.synod()
 
     print("@> Node Started")
     while True:
