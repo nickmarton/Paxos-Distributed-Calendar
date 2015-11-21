@@ -9,7 +9,7 @@ class Proposer(object):
     current_proposal_number:    Proposal number that was most recently used 
     """
 
-    def __init__(self, uid):
+    def __init__(self, uid, ip_table):
         """Construct Proposer object."""
         if type(uid) != int:
             raise TypeError("uid must be an integer")
@@ -17,7 +17,10 @@ class Proposer(object):
         self._uid = uid
         self._current_proposal_number = uid
         self._queue = []
+        self._ip_table = ip_table
         self._is_Proposer = True
+
+
 
     def start(self):
         """Start the Proposer; serve messages in it's queue."""
@@ -25,7 +28,10 @@ class Proposer(object):
 
             if self._queue:
                 message = self._queue.pop()
-                print "got message:"
+                message_command_type = message[0]
+                print "Proposer got message:"
+                if message_command_type == "promise":
+                    self.recv_promise(message)
                 print message
 
 

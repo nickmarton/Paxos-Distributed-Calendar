@@ -47,8 +47,8 @@ class Node(object):
 
         self._node_id = node_id
         self._calendar = Calendar()
-        self._proposer = Proposer(node_id)
-        self._acceptor = Acceptor()
+        self._proposer = Proposer(node_id,self._ip_table)
+        self._acceptor = Acceptor(self._ip_table)
         self._log = {}
         self._leader = None
         self._is_Node = True
