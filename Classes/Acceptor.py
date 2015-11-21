@@ -58,7 +58,6 @@ class Acceptor(object):
         v_value = message[1]
         print "TO: Record",v_value,"in log"
 
-
     def start(self):
         """Start the Acceptor; serve messages in its queue."""
         while True:

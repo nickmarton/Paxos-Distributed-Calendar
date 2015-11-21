@@ -20,8 +20,6 @@ class Proposer(object):
         self._ip_table = ip_table
         self._is_Proposer = True
 
-
-
     def start(self):
         """Start the Proposer; serve messages in it's queue."""
         while True:
