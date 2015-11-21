@@ -81,8 +81,12 @@ class Node(object):
 
     def paxos(self):
         """Engage this Node in Paxos algorithm."""
-        def _parse_message(message):
-            """Parse UDP pickled tuple message."""
+        def _parse_message(sender_ID, message):
+            """
+            Parse UDP pickled tuple message.
+            Self is available from closure.
+            """
+
             valid_message_types = [
                 "prepare", "promise", "accept", "ack", "commit"]
 
@@ -111,7 +115,7 @@ class Node(object):
                         self._acceptor._queue.append(message)
                     else:
                         logging.error(
-                            "Commit message must be of form 'commit' calendar")
+                            "Commit message must be of form 'commit' Calendar")
             elif len(message_args) == 2:
                 arg_0_is_int = type(message_args[0]) == int
                 arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
@@ -134,7 +138,7 @@ class Node(object):
                         logging.error(
                             "Promise message must be of form "
                             "'promise' int Calendar")
-                
+
                 #handle ack messages
                 elif message_type == "ack":
                     if arg_0_is_int and arg_1_is_calendar:
@@ -159,8 +163,13 @@ class Node(object):
             sock.bind((IP, UDP_PORT))
             while True:
                 data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+                #Quick loopup of ID of sender from IP received
+                sender_ID = filter(
+                    lambda row: row[1][0] == addr[0],
+                    self._ip_table.items())[0][0]
+                
                 message = pickle.loads(data)
-                _parse_message(message)
+                _parse_message(sender_ID, message)
 
         thread.start_new_thread(_do_paxos, (self,))
 
@@ -472,7 +481,7 @@ def main():
     except IOError:
         pass
 
-    #N.elect_leader(poll_time=6, timeout=3)
+    N.elect_leader(poll_time=6, timeout=3)
     N.paxos()
 
     print("@> Node Started")

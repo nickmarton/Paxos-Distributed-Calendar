@@ -24,7 +24,7 @@ class Acceptor(object):
         self._is_Acceptor = True
 
     def start(self):
-        """Start the proposer; begin serving messages in the queue meant for Acceptor."""
+        """Start the Acceptor; serve messages in its queue."""
         while True:
 
             if self._queue:

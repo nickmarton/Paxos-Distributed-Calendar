@@ -17,6 +17,7 @@ class Proposer(object):
         self._uid = uid
         self._current_proposal_number = uid
         self._queue = []
+        self._is_Proposer = True
 
     def start(self):
         """Start the Proposer; serve messages in it's queue."""
