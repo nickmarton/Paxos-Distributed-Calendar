@@ -55,29 +55,33 @@ class Node(object):
 
     def insert(self, appointment):
         """Insert an Appointment into this Node's Calendar."""
+        #First create new Calendar with new appointment
         from copy import deepcopy
         new_calendar = deepcopy(self._calendar)
         new_calendar += appointment
-        print new_calendar
 
-        if self._node_id == self._leader:
-            pass
-        else:
-            pass
+        #Then ask leader to propose the new Calendar
+        leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
+        proposal_message = pickle.dumps(("propose", new_calendar))
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
+        udp_socket.close()
 
     def delete(self, appointment):
         """Delete an Appointment in this Node's Calendar."""
+        #First create new Calendar without appointment
         from copy import deepcopy
         new_calendar = Calendar()
         for self_appointment in self._calendar:
             if self_appointment != appointment:
                 new_calendar += deepcopy(self_appointment)
-        print new_calendar
 
-        if self._node_id == self._leader:
-            pass
-        else:
-            pass
+        #Then ask leader to propose the new Calendar
+        leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
+        proposal_message = pickle.dumps(("propose", new_calendar))
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
+        udp_socket.close()
 
     def paxos(self):
         """Engage this Node in Paxos algorithm."""
@@ -88,9 +92,9 @@ class Node(object):
             """
 
             valid_message_types = [
-                "prepare", "promise", "accept", "ack", "commit"]
+                "propose", "prepare", "promise", "accept", "ack", "commit"]
 
-            message_type, message_args = message[0], message[1:len(message)]
+            message_type, message_args = message[0], message[1:]
 
             #syntactic checking
             if message_type not in valid_message_types:
@@ -100,6 +104,15 @@ class Node(object):
             if len(message_args) == 1:
                 arg_0_is_int = type(message_args[0]) == int
                 arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
+
+                #handle prepare messages
+                if message_type == "propose":
+                    if arg_0_is_calendar:
+                        self._proposer._queue.append(message)
+                    else:
+                        logging.error(
+                            "Prepare message must be of form "
+                            "'propose' Calendar")
 
                 #handle prepare messages
                 if message_type == "prepare":
@@ -162,8 +175,8 @@ class Node(object):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
             sock.bind((IP, UDP_PORT))
             while True:
-                data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-                #Quick loopup of ID of sender from IP received
+                data, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
+                #Quick lookup of ID of sender from IP received
                 sender_ID = filter(
                     lambda row: row[1][0] == addr[0],
                     self._ip_table.items())[0][0]

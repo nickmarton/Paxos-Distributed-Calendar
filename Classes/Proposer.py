@@ -28,7 +28,6 @@ class Proposer(object):
                 print "got message:"
                 print message
 
-
     def __str__(self):
         """Implement str(Proposer)."""
         ret_str = "Proposer:\n\tUnique ID: " + str(self._uid) + '\n\t'
