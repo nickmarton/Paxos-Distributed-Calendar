@@ -92,56 +92,60 @@ class Node(object):
             if message_type not in valid_message_types:
                 logging.error("Invalid message type")
                 return
-            if len(message_args) != 1 and len(message_args) != 2:
+
+            if len(message_args) == 1:
+                arg_0_is_int = type(message_args[0]) == int
+                arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
+
+                #handle prepare messages
+                if message_type == "prepare":
+                    if arg_0_is_int:
+                        self._acceptor._queue.append(message)
+                    else:
+                        logging.error(
+                            "Prepare message must be of form 'prepare' int")
+
+                #handle commit messages
+                elif message_type == "commit":
+                    if arg_0_is_calendar:
+                        self._acceptor._queue.append(message)
+                    else:
+                        logging.error(
+                            "Commit message must be of form 'commit' calendar")
+            elif len(message_args) == 2:
+                arg_0_is_int = type(message_args[0]) == int
+                arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
+                arg_1_is_calendar = hasattr(message_args[1], "_is_Calendar")
+
+                #handle accept messages
+                if message_type == "accept":
+                    if arg_0_is_int and arg_1_is_calendar:
+                        self._acceptor._queue.append(message)
+                    else:
+                        logging.error(
+                            "Accept message must be of form "
+                            "'accept' int Calendar")
+
+                #handle promise messages
+                elif message_type == "promise":
+                    if arg_0_is_int and arg_1_is_calendar:
+                        self._proposer._queue.append(message)
+                    else:
+                        logging.error(
+                            "Promise message must be of form "
+                            "'promise' int Calendar")
+                
+                #handle ack messages
+                elif message_type == "ack":
+                    if arg_0_is_int and arg_1_is_calendar:
+                        self._proposer._queue.append(message)
+                    else:
+                        logging.error(
+                            "Ack message must be of form "
+                            "'ack' int Calendar")
+            else:
                 logging.error("Invalid message parameters")
                 return
-
-            arg_0_is_int = type(message_args[0]) == int
-            arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
-            arg_1_is_calendar = hasattr(message_args[1], "_is_Calendar")
-            
-            #handle prepare messages
-            if message_type == "prepare":
-                if arg_0_is_int:
-                    self._acceptor._queue.append(message)
-                else:
-                    logging.error(
-                        "Prepare message must be of form 'prepare' int")
-
-            #handle commit messages
-            elif message_type == "commit":
-                if arg_0_is_calendar:
-                    self._acceptor._queue.append(message)
-                else:
-                    logging.error(
-                        "Commit message must be of form 'commit' calendar")
-            
-            #handle accept messages
-            elif message_type == "accept":
-                if arg_0_is_int and arg_1_is_calendar:
-                    self._acceptor._queue.append(message)
-                else:
-                    logging.error(
-                        "Accept message must be of form "
-                        "'accept' int Calendar")
-
-            #handle promise messages
-            elif message_type == "promise":
-                if arg_0_is_int and arg_1_is_calendar:
-                    self._proposer._queue.append(message)
-                else:
-                    logging.error(
-                        "Promise message must be of form "
-                        "'promise' int Calendar")
-            
-            #handle ack messages
-            elif message_type == "ack":
-                if arg_0_is_int and arg_1_is_calendar:
-                    self._proposer._queue.append(message)
-                else:
-                    logging.error(
-                        "Ack message must be of form "
-                        "'ack' int Calendar")
 
         def _do_paxos(self):
             """Do Paxos algorithm for this Node."""
