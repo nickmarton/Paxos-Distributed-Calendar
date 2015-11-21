@@ -29,6 +29,7 @@ class Acceptor(object):
 
             if self._queue:
                 message = self._queue.pop()
+                print "got message:"
                 print message
 
     def __str__(self):

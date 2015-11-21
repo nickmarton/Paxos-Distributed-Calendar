@@ -81,6 +81,68 @@ class Node(object):
 
     def paxos(self):
         """Engage this Node in Paxos algorithm."""
+        def _parse_message(message):
+            """Parse UDP pickled tuple message."""
+            valid_message_types = [
+                "prepare", "promise", "accept", "ack", "commit"]
+
+            message_type, message_args = message[0], message[1:len(message)]
+
+            #syntactic checking
+            if message_type not in valid_message_types:
+                logging.error("Invalid message type")
+                return
+            if len(message_args) != 1 and len(message_args) != 2:
+                logging.error("Invalid message parameters")
+                return
+
+            arg_0_is_int = type(message_args[0]) == int
+            arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
+            arg_1_is_calendar = hasattr(message_args[1], "_is_Calendar")
+            
+            #handle prepare messages
+            if message_type == "prepare":
+                if arg_0_is_int:
+                    self._acceptor._queue.append(message)
+                else:
+                    logging.error(
+                        "Prepare message must be of form 'prepare' int")
+
+            #handle commit messages
+            elif message_type == "commit":
+                if arg_0_is_calendar:
+                    self._acceptor._queue.append(message)
+                else:
+                    logging.error(
+                        "Commit message must be of form 'commit' calendar")
+            
+            #handle accept messages
+            elif message_type == "accept":
+                if arg_0_is_int and arg_1_is_calendar:
+                    self._acceptor._queue.append(message)
+                else:
+                    logging.error(
+                        "Accept message must be of form "
+                        "'accept' int Calendar")
+
+            #handle promise messages
+            elif message_type == "promise":
+                if arg_0_is_int and arg_1_is_calendar:
+                    self._proposer._queue.append(message)
+                else:
+                    logging.error(
+                        "Promise message must be of form "
+                        "'promise' int Calendar")
+            
+            #handle ack messages
+            elif message_type == "ack":
+                if arg_0_is_int and arg_1_is_calendar:
+                    self._proposer._queue.append(message)
+                else:
+                    logging.error(
+                        "Ack message must be of form "
+                        "'ack' int Calendar")
+
         def _do_paxos(self):
             """Do Paxos algorithm for this Node."""
             #Begin running the Acceptor and Proposer in the background
@@ -93,62 +155,8 @@ class Node(object):
             sock.bind((IP, UDP_PORT))
             while True:
                 data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-                message_received = pickle.loads(data)
-                #the message recieved will always be a pickled tuple
-                print "received message:", pickle.loads(data)
-
-                message_type = message_received[0]
-                message_arguements = message_received[1:len(message_received)]
-                
-                if message_type == "accept":
-                    print "Accept message with these arguements", message_received[1:len(message_received)]
-                    if len(message_arguements) == 2:
-                        if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
-                            pass#self._acceptor._queue.append(message_received)
-                        else:
-                            print "First arguement must be of type Int and second arguement must be a calander"
-                    else:
-                        print "Inappropriate amount of arguements"
-                
-                elif message_type == "prepare":
-                    print "Prepare message with these arguements", message_received[1:len(message_received)]
-                    if len(message_arguements) == 1:
-                        if int(message_arguements[0]):
-                            pass#self._acceptor._queue.append(message_received)
-                        else:
-                            print "Arguements for Prepare must be of type Int"
-                    else:
-                        print "Inappropriate amount of arguements"
-                elif message_type == "commit":
-                    print "Commit message with these arguements", message_received[1:len(message_received)]
-                    if len(message_arguements) == 1:
-                        if message_arguements[0].hasattr("_is_Calendar"):
-                            pass#self._acceptor._queue.append(message_received)
-                        else:
-                            print " Arguement not of type calendar "
-                    else:
-                        print "Inappropriate amount of arguements"
-                elif message_type == "promsie":
-                    print "Promise message with these arguements", message_received[1:len(message_received)]
-                    #self._proposer._queue.append(message_received)
-                    if len(message_arguements) == 2:
-                        if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
-                            pass#self._proposer._queue.append(message_received)
-                        else:
-                            print "Arguements are of Inappropriate type"
-                    else:
-                        print "Inappropriate amount of arguements"
-                elif message_type == "ack":
-                    print "Ack message with these arguements", message_received[1:len(message_received)]
-                    if len(message_arguements) == 2 :
-                        if int(message_arguements[0]) and message_arguements[1].hasattr("_is_Calendar"):
-                            pass#self._proposer._queue.append(message_received)
-                        else:
-                            print "Inappropriate arguement(s) type(s)"
-                    else:
-                        print "Inappropriate amount of arguements"
-                else:
-                    print " Invalid message type "
+                message = pickle.loads(data)
+                _parse_message(message)
 
         thread.start_new_thread(_do_paxos, (self,))
 
@@ -442,7 +450,7 @@ def main():
     c3 = Calendar(a1, a2, a3)
     c4 = Calendar(a1, a2, a3, a4)
     
-    set_verbosity(0)
+    set_verbosity(1)
 
     N = Node(int(sys.argv[1]))
 

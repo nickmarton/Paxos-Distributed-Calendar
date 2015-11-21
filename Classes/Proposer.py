@@ -24,6 +24,7 @@ class Proposer(object):
 
             if self._queue:
                 message = self._queue.pop()
+                print "got message:"
                 print message
 
 
