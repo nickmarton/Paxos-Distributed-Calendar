@@ -16,9 +16,9 @@ def main():
 	from Calendar import Calendar
 	c = Calendar()
 
-	test_prepare = ("prepare", 1)
+	test_prepare = ("prepare", 2)
 	test_commit = ("commit", c)
-	test_accept = ("accept", 1, c)
+	test_accept = ("accept", 2, c)
 	test_promise = ("promise", 1, c)
 	test_ack = ("ack", 1, c)
 
@@ -29,7 +29,7 @@ def main():
 		if message == "quit":
 			break
 		else:
-			UDP_transmission(test_ack, UDP_IP, int(UDP_PORT))
+			UDP_transmission(test_prepare, UDP_IP, int(UDP_PORT))
 
 if __name__ == "__main__":
 	main()
