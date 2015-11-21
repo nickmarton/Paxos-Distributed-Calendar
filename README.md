@@ -8,6 +8,5 @@
     * Node needs attributes "log" and "calendar"
 * **Code**
     * Synod Algorithm
-        * Node passing to Proposer/Acceptors
         * UDP setup/tear down
         * Proposer/Acceptor functions
