@@ -85,7 +85,7 @@ class Node(object):
 
     def paxos(self):
         """Engage this Node in Paxos algorithm."""
-        def _parse_message(sender_ID, message):
+        def _parse_message(message):
             """
             Parse UDP pickled tuple message.
             Self is available from closure.
@@ -101,9 +101,10 @@ class Node(object):
                 logging.error("Invalid message type")
                 return
 
-            if len(message_args) == 1:
+            if 2 <= len(message_args) <= 3:
                 arg_0_is_int = type(message_args[0]) == int
                 arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
+                arg_1_is_calendar = hasattr(message_args[1], "_is_Calendar")
 
                 #handle prepare messages
                 if message_type == "propose":
@@ -115,34 +116,13 @@ class Node(object):
                             "'propose' Calendar")
 
                 #handle prepare messages
-                if message_type == "prepare":
+                elif message_type == "prepare":
                     if arg_0_is_int:
                         self._acceptor._queue.append(message)
                     else:
                         logging.error(
                             "Prepare message must be of form 'prepare' int")
-
-                #handle commit messages
-                elif message_type == "commit":
-                    if arg_0_is_calendar:
-                        self._acceptor._queue.append(message)
-                    else:
-                        logging.error(
-                            "Commit message must be of form 'commit' Calendar")
-            elif len(message_args) == 2:
-                arg_0_is_int = type(message_args[0]) == int
-                arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
-                arg_1_is_calendar = hasattr(message_args[1], "_is_Calendar")
-
-                #handle accept messages
-                if message_type == "accept":
-                    if arg_0_is_int and arg_1_is_calendar:
-                        self._acceptor._queue.append(message)
-                    else:
-                        logging.error(
-                            "Accept message must be of form "
-                            "'accept' int Calendar")
-
+                
                 #handle promise messages
                 elif message_type == "promise":
                     if arg_0_is_int and arg_1_is_calendar:
@@ -152,6 +132,15 @@ class Node(object):
                             "Promise message must be of form "
                             "'promise' int Calendar")
 
+                #handle accept messages
+                elif message_type == "accept":
+                    if arg_0_is_int and arg_1_is_calendar:
+                        self._acceptor._queue.append(message)
+                    else:
+                        logging.error(
+                            "Accept message must be of form "
+                            "'accept' int Calendar")
+
                 #handle ack messages
                 elif message_type == "ack":
                     if arg_0_is_int and arg_1_is_calendar:
@@ -160,6 +149,15 @@ class Node(object):
                         logging.error(
                             "Ack message must be of form "
                             "'ack' int Calendar")
+
+                #handle commit messages
+                elif message_type == "commit":
+                    if arg_0_is_calendar:
+                        self._acceptor._queue.append(message)
+                    else:
+                        logging.error(
+                            "Commit message must be of form 'commit' Calendar")
+
             else:
                 logging.error("Invalid message parameters")
                 return
@@ -182,7 +180,9 @@ class Node(object):
                     self._ip_table.items())[0][0]
                 
                 message = pickle.loads(data)
-                _parse_message(sender_ID, message)
+                #bind sender_ID to message
+                message = message + (sender_ID,)
+                _parse_message(message)
 
         thread.start_new_thread(_do_paxos, (self,))
 

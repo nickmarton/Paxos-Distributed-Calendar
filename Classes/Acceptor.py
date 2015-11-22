@@ -22,41 +22,54 @@ class Acceptor(object):
         self._accNum = None
         self._accVal = None
         self._queue = []
-        self._is_Acceptor = True
         self._ip_table = ip_table
+        self._is_Acceptor = True
 
-    def UDP_transmission(self, data, UDP_IP, UDP_PORT):
-        """Transmits data to IP:PORT via UDP"""
+    def _send_UDP_message(self, data, UDP_IP, UDP_PORT):
+        """Send data through UDP socket bound to (UDP_IP, UDP_PORT)."""
         transmission = pickle.dumps(data)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.sendto(transmission, (str(UDP_IP), int(UDP_PORT)))
+        s.close()
 
-    def send_promise(self):
-        for i in self._ip_table:
-            IP_address = self._ip_table[i][1]
-            UDP_PORT = self._ip_table[i][2]
-            transmission = ("promise", self._maxPrepare, 
-                self._accNum, self._accVal)
-            self.UDP_transmission( transmission, IP_address, int(UDP_PORT))
+    def _recv_prepare(self, message):
+        """
+        Handle reception of prepare message as described in Synod Algorithm.
+        """
 
-    def recv_prepare(self, message):
-        m_value = message[1]
-        if m_value > self._maxPrepare:
-            self._maxPrepare = m_value
-            transmission = ("promise", self._accNum, self._accVal)
-            self.send_promise()
+        m, sender_ID = message[1], message[2]
+        if m > self._maxPrepare:
+            self._maxPrepare = m
+            IP, UDP_PORT = self._ip_table[sender_ID][1], self._ip_table[sender_ID][2]
+            self._send_promise(IP, UDP_PORT, self._accNum, self._accVal)
 
-    def recv_accept(self, message):
-        m_value = message[1]
-        v_value = message[2]
-        if m_value >= self._maxPrepare:
-            self._accNum = m_value
-            self._accVal = v_value
-            print "TO DO: SEND ack",(self._accNum, self._accVal),")" 
-    
-    def recv_commit(self, message):
-        v_value = message[1]
-        print "TO: Record",v_value,"in log"
+    def _send_promise(self, IP, PORT, accNum, accVal):
+        """Send promise message with given accNum, accVal to given IP, PORT."""
+        transmission = ("promise", self._accNum, self._accVal)
+        self._send_UDP_message(transmission, IP, PORT)
+
+    def _recv_accept(self, message):
+        """
+        Handle reception of accept message as described in Synod Algorithm.
+        """
+
+        m, v, sender_ID = message
+        if m >= self._maxPrepare:
+            self._accNum = m
+            self._accVal = v
+            print "TO DO: SEND ack" + str((self._accNum, self._accVal)) + ")"
+
+    def _send_ack(self, self, IP, PORT, accNum, accVal):
+        """Send ack with given accNum, accVal to given IP, PORT."""
+        pass
+
+    def _recv_commit(self, message):
+        """
+        Handle reception of commit message as described in Synod Algorithm.
+        """
+
+        v = message[1]
+        print "TO: Record",v,"in log"
 
     def start(self):
         """Start the Acceptor; serve messages in its queue."""
@@ -66,11 +79,11 @@ class Acceptor(object):
                 message_command_type = message[0]
                 print "Acceptor got message:"
                 if message_command_type == "prepare":
-                    self.recv_prepare(message)
+                    print "type: prepare" #self._recv_prepare(message)
                 elif message_command_type == "accept":
-                    self.recv_accept(message)
+                    print "type: accept" #self._recv_accept(message)
                 elif message_command_type == "commit":
-                    self.recv_commit(message)
+                    print "type: commit" #self._recv_commit(message)
                 print message
 
     def __str__(self):
