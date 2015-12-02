@@ -20,18 +20,25 @@ class Proposer(object):
         self._ip_table = ip_table
         self._is_Proposer = True
 
-    def _send_UDP_message(self, data, UDP_IP, UDP_PORT):
-        """Send data through UDP socket bound to (UDP_IP, UDP_PORT)."""
+    def _send_UDP_message(self, data, IP, UDP_PORT):
+        """Send data through UDP socket bound to (IP, UDP_PORT)."""
+        import pickle
+        import socket
         transmission = pickle.dumps(data)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.sendto(transmission, (str(UDP_IP), int(UDP_PORT)))
+        s.sendto(transmission, (IP, UDP_PORT))
         s.close()
 
-    def _send_prepare(self):
+    def _send_prepare(self, message):
         """Send prepare message as described in Synod Algorithm."""
         m = self._current_proposal_number + 10
+
+        log_slot = message[2]
+        
+        transmission = ("prepare", m, log_slot)
         for ID, IP_info in self._ip_table.items():
-            pass
+            IP, UDP_PORT = IP_info[0], IP_info[2]
+            self._send_UDP_message(transmission, IP, UDP_PORT)
 
     def _recv_promise(self):
         """Receive promise message."""
@@ -39,8 +46,10 @@ class Proposer(object):
 
     def _send_accept(self):
         """Send accept message as described in Synod Algorithm."""
+        transmission = ("accept", )
         for ID, IP_info in self._ip_table.items():
-            pass
+            IP, UDP_PORT = IP_info[0], IP_info[2]
+            self._send_UDP_message(transmission, IP, UDP_PORT)
 
     def _recv_ack(self):
         """Receive ack message."""
@@ -48,8 +57,10 @@ class Proposer(object):
 
     def _send_commit(self):
         """Send commit message as described in Synod Algorithm."""
+        transmission = ("commit", )
         for ID, IP_info in self._ip_table.items():
-            pass
+            IP, UDP_PORT = IP_info[0], IP_info[2]
+            self._send_UDP_message(transmission, IP, UDP_PORT)
 
     def start(self):
         """Start the Proposer; serve messages in it's queue."""
@@ -60,12 +71,14 @@ class Proposer(object):
                 message_command_type = message[0]
                 print "Proposer got message:"
                 if message_command_type == "propose":
-                    print "type: propose" #self.send_prepare(message)
+                    print "type: propose"
+                    self._send_prepare(message)
                 if message_command_type == "promise":
                     print "type: promise" #self.recv_promise(message)
                 if message_command_type == "ack":
                     print "type: ack" #self.recv_ack(message)
                 print message
+                print
 
     def __str__(self):
         """Implement str(Proposer)."""

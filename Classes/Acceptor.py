@@ -1,6 +1,8 @@
 """Acceptor class for Paxos Calendar."""
+
 import pickle
 import socket
+
 class Acceptor(object):
     """
     Acceptor class.
@@ -25,11 +27,13 @@ class Acceptor(object):
         self._ip_table = ip_table
         self._is_Acceptor = True
 
-    def _send_UDP_message(self, data, UDP_IP, UDP_PORT):
-        """Send data through UDP socket bound to (UDP_IP, UDP_PORT)."""
+    def _send_UDP_message(self, data, IP, UDP_PORT):
+        """Send pickled data through UDP socket bound to (IP, UDP_PORT)."""
+        import pickle
+        import socket
         transmission = pickle.dumps(data)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.sendto(transmission, (str(UDP_IP), int(UDP_PORT)))
+        s.sendto(transmission, (IP, UDP_PORT))
         s.close()
 
     def _recv_prepare(self, message):
@@ -45,7 +49,7 @@ class Acceptor(object):
 
     def _send_promise(self, IP, PORT, accNum, accVal):
         """Send promise message with given accNum, accVal to given IP, PORT."""
-        transmission = ("promise", self._accNum, self._accVal)
+        transmission = ("promise", accNum, accVal)
         self._send_UDP_message(transmission, IP, PORT)
 
     def _recv_accept(self, message):
@@ -53,15 +57,17 @@ class Acceptor(object):
         Handle reception of accept message as described in Synod Algorithm.
         """
 
-        m, v, sender_ID = message
+        m, v, sender_ID = message[1], message[2], message[3]
         if m >= self._maxPrepare:
             self._accNum = m
             self._accVal = v
-            print "TO DO: SEND ack" + str((self._accNum, self._accVal)) + ")"
+            IP, UDP_PORT = self._ip_table[sender_ID][1], self._ip_table[sender_ID][2]
+            self._send_ack(IP, UDP_PORT, self._accNum, self._accVal)
 
-    def _send_ack(self, self, IP, PORT, accNum, accVal):
+    def _send_ack(self, IP, PORT, accNum, accVal):
         """Send ack with given accNum, accVal to given IP, PORT."""
-        pass
+        transmission = ("ack", accNum, accVal)
+        self._send_UDP_message(transmission, IP, PORT)
 
     def _recv_commit(self, message):
         """
@@ -85,6 +91,7 @@ class Acceptor(object):
                 elif message_command_type == "commit":
                     print "type: commit" #self._recv_commit(message)
                 print message
+                print
 
     def __str__(self):
         """Implement str(Acceptor)."""

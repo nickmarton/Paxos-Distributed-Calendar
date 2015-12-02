@@ -60,12 +60,20 @@ class Node(object):
         new_calendar = deepcopy(self._calendar)
         new_calendar += appointment
 
+        next_log_slot = max(self._log.keys()) + 1
+
         #Then ask leader to propose the new Calendar
-        leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
-        proposal_message = pickle.dumps(("propose", new_calendar))
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
-        udp_socket.close()
+        try:
+            leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
+            proposal_message = pickle.dumps(
+                ("propose", new_calendar, next_log_slot))
+            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
+            udp_socket.close()
+        except KeyError as excinfo:
+            print "Unable to find leader, waiting until one is selected"
+            time.sleep(6)
+            self.insert(appointment)
 
     def delete(self, appointment):
         """Delete an Appointment in this Node's Calendar."""
@@ -76,12 +84,19 @@ class Node(object):
             if self_appointment != appointment:
                 new_calendar += deepcopy(self_appointment)
 
+        next_log_slot = max(self._log.key()) + 1
+
         #Then ask leader to propose the new Calendar
-        leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
-        proposal_message = pickle.dumps(("propose", new_calendar))
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
-        udp_socket.close()
+        try:
+            leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
+            proposal_message = pickle.dumps(("propose", new_calendar, next_log_slot))
+            udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
+            udp_socket.close()
+        except KeyError as excinfo:
+            print "Unable to find leader, waiting until one is selected"
+            time.sleep(6)
+            self.delete(appointment)
 
     def paxos(self):
         """Engage this Node in Paxos algorithm."""
@@ -101,7 +116,7 @@ class Node(object):
                 logging.error("Invalid message type")
                 return
 
-            if 2 <= len(message_args) <= 3:
+            if 3 <= len(message_args) <= 4:
                 arg_0_is_int = type(message_args[0]) == int
                 arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
                 arg_1_is_calendar = hasattr(message_args[1], "_is_Calendar")
@@ -109,10 +124,21 @@ class Node(object):
                 #handle prepare messages
                 if message_type == "propose":
                     if arg_0_is_calendar:
+                        #If in this conditional, we are the leader.
+                        #First we have to fill any empty log slots
+                        '''
+                        slot_ids = self._log.keys()
+                        for i in range(max(slot_ids)):
+                            if i not in slot_ids:
+                                #TODO: do adjustments for message_args length conditional above, adjust indexes used for messages
+                                dummy_message = ("propose", Calendar(), self._node_id, i)
+                                self._proposer._queue.append(dummy_message)
+                        '''
+                        #Then we can add this new proposal
                         self._proposer._queue.append(message)
                     else:
                         logging.error(
-                            "Prepare message must be of form "
+                            "Propose message must be of form "
                             "'propose' Calendar")
 
                 #handle prepare messages
@@ -183,6 +209,8 @@ class Node(object):
                 #bind sender_ID to message
                 message = message + (sender_ID,)
                 _parse_message(message)
+
+                time.sleep(.01)
 
         thread.start_new_thread(_do_paxos, (self,))
 
@@ -418,6 +446,10 @@ class Node(object):
             except ValueError as excinfo:
                 print excinfo
                 print
+            except Exception as e:
+                exc_type, exc_obj, exc_tb = sys.exc_info()[:]
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
             finally:
                 return
 
@@ -476,7 +508,7 @@ def main():
     c3 = Calendar(a1, a2, a3)
     c4 = Calendar(a1, a2, a3, a4)
     
-    set_verbosity(1)
+    set_verbosity(2)
 
     N = Node(int(sys.argv[1]))
 
