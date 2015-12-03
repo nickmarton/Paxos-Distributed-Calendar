@@ -7,7 +7,8 @@ def UDP_transmission(data, UDP_IP, UDP_PORT):
     """Transmits data to IP:PORT via UDP"""
     transmission = pickle.dumps(data)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.sendto(transmission, (UDP_IP, UDP_PORT))
+    success = s.sendto(transmission, (UDP_IP, UDP_PORT))
+    print success
     s.close()
 
 def listen():

@@ -41,7 +41,11 @@ class Proposer(object):
             self._send_UDP_message(transmission, IP, UDP_PORT)
 
     def _recv_promise(self):
-        """Receive promise message."""
+        """
+        Receive promise message.
+
+        Promise message of form ("promise", accNum, accVal, log_slot, sender_ID)
+        """
         pass
 
     def _send_accept(self):
@@ -65,20 +69,21 @@ class Proposer(object):
     def start(self):
         """Start the Proposer; serve messages in it's queue."""
         while True:
-
             if self._queue:
                 message = self._queue.pop()
                 message_command_type = message[0]
-                print "Proposer got message:"
+                debug_str = "Proposer got message:"
                 if message_command_type == "propose":
-                    print "type: propose"
+                    print debug_str + "type: propose"
                     self._send_prepare(message)
                 if message_command_type == "promise":
-                    print "type: promise" #self.recv_promise(message)
+                    print debug_str + "type: promise"
+                    #self.recv_promise(message)
                 if message_command_type == "ack":
-                    print "type: ack" #self.recv_ack(message)
-                print message
-                print
+                    print debug_str + "type: ack"
+                    #self.recv_ack(message)
+                #print message
+                #print
 
     def __str__(self):
         """Implement str(Proposer)."""

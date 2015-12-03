@@ -71,8 +71,10 @@ class Node(object):
             udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
             udp_socket.close()
         except KeyError as excinfo:
-            print "Unable to find leader, waiting until one is selected"
-            time.sleep(6)
+            print "Unable to find leader, waiting until one is selected...\n"
+            while self._leader == None:
+                pass
+            print "Found leader, continuing..."
             self.insert(appointment)
 
     def delete(self, appointment):
@@ -89,13 +91,16 @@ class Node(object):
         #Then ask leader to propose the new Calendar
         try:
             leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
-            proposal_message = pickle.dumps(("propose", new_calendar, next_log_slot))
+            proposal_message = pickle.dumps(
+                ("propose", new_calendar, next_log_slot))
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
             udp_socket.close()
         except KeyError as excinfo:
-            print "Unable to find leader, waiting until one is selected"
-            time.sleep(6)
+            print "Unable to find leader, waiting until one is selected..."
+            while self._leader == None:
+                pass
+            print "Found leader, continuing..."
             self.delete(appointment)
 
     def paxos(self):
@@ -120,6 +125,14 @@ class Node(object):
                 arg_0_is_int = type(message_args[0]) == int
                 arg_0_is_calendar = hasattr(message_args[0], "_is_Calendar")
                 arg_1_is_calendar = hasattr(message_args[1], "_is_Calendar")
+                if not arg_0_is_calendar:
+                    arg_0_is_None = message_args[0] == None
+                else:
+                    arg_0_is_None = False
+                if not arg_1_is_calendar:
+                    arg_1_is_None = message_args[1] == None
+                else:
+                    arg_1_is_None = False
 
                 #handle prepare messages
                 if message_type == "propose":
@@ -151,7 +164,7 @@ class Node(object):
                 
                 #handle promise messages
                 elif message_type == "promise":
-                    if arg_0_is_int and arg_1_is_calendar:
+                    if (arg_0_is_int and arg_1_is_calendar) or (arg_0_is_None and arg_1_is_None):
                         self._proposer._queue.append(message)
                     else:
                         logging.error(
@@ -199,7 +212,7 @@ class Node(object):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
             sock.bind((IP, UDP_PORT))
             while True:
-                data, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
+                data, addr = sock.recvfrom(4096) # buffer size is 1024 bytes
                 #Quick lookup of ID of sender from IP received
                 sender_ID = filter(
                     lambda row: row[1][0] == addr[0],
@@ -290,7 +303,7 @@ class Node(object):
         table = {}
 
         import re
-        pattern = r"^\d+,\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3},\d{4},\d{4}$"
+        pattern = r"^\d+,\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3},\d{4},\d{5}$"
         with open(Node._ip_filename, "r") as f:
                 for translation in f:
                     match = re.match(pattern, translation.strip())
@@ -446,6 +459,7 @@ class Node(object):
             except ValueError as excinfo:
                 print excinfo
                 print
+            #fail-safe catch in case something fucks up and we don't know what
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()[:]
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -502,21 +516,27 @@ def main():
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
     a3 = Appointment("lol","saturday","11:30am","12:30pm", [1])
     a4 = Appointment("yeee","MondAy","11:30am","12:30pm", [1])
+    a5 = Appointment("lolololol","Thursday","11:30am","12:30pm", [1])
 
     c1 = Calendar(a1)
     c2 = Calendar(a1, a2)
     c3 = Calendar(a1, a2, a3)
     c4 = Calendar(a1, a2, a3, a4)
+    c5 = Calendar(a1, a2, a3, a4, a5)
     
-    set_verbosity(2)
+    set_verbosity(3)
 
     N = Node(int(sys.argv[1]))
 
+    
     N._log[0] = c1
+    '''
     N._log[1] = c2
     N._log[2] = c3
     N._log[3] = c4
-    N._calendar = c4
+    N._log[4] = c5
+    '''
+    N._calendar = c1
 
     #try to load a previous state of this Node
     try:

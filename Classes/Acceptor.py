@@ -39,17 +39,19 @@ class Acceptor(object):
     def _recv_prepare(self, message):
         """
         Handle reception of prepare message as described in Synod Algorithm.
+
+        Prepare messages of form ("prepare", m, log_slot, sender_ID)
         """
 
-        m, sender_ID = message[1], message[2]
+        m, log_slot, sender_ID = message[1], message[2], message[3]
         if m > self._maxPrepare:
             self._maxPrepare = m
-            IP, UDP_PORT = self._ip_table[sender_ID][1], self._ip_table[sender_ID][2]
-            self._send_promise(IP, UDP_PORT, self._accNum, self._accVal)
+            IP, UDP_PORT = self._ip_table[sender_ID][0], self._ip_table[sender_ID][2]
+            self._send_promise(IP, UDP_PORT, self._accNum, self._accVal, log_slot)
 
-    def _send_promise(self, IP, PORT, accNum, accVal):
+    def _send_promise(self, IP, PORT, accNum, accVal, log_slot):
         """Send promise message with given accNum, accVal to given IP, PORT."""
-        transmission = ("promise", accNum, accVal)
+        transmission = ("promise", accNum, accVal, log_slot)
         self._send_UDP_message(transmission, IP, PORT)
 
     def _recv_accept(self, message):
@@ -61,7 +63,7 @@ class Acceptor(object):
         if m >= self._maxPrepare:
             self._accNum = m
             self._accVal = v
-            IP, UDP_PORT = self._ip_table[sender_ID][1], self._ip_table[sender_ID][2]
+            IP, UDP_PORT = self._ip_table[sender_ID][0], self._ip_table[sender_ID][2]
             self._send_ack(IP, UDP_PORT, self._accNum, self._accVal)
 
     def _send_ack(self, IP, PORT, accNum, accVal):
@@ -83,15 +85,18 @@ class Acceptor(object):
             if self._queue:
                 message = self._queue.pop()
                 message_command_type = message[0]
-                print "Acceptor got message:"
+                debug_str = "Acceptor got message; "
                 if message_command_type == "prepare":
-                    print "type: prepare" #self._recv_prepare(message)
+                    print debug_str + "type: prepare"
+                    self._recv_prepare(message)
                 elif message_command_type == "accept":
-                    print "type: accept" #self._recv_accept(message)
+                    print debug_str + "type: accept"
+                    #self._recv_accept(message)
                 elif message_command_type == "commit":
-                    print "type: commit" #self._recv_commit(message)
-                print message
-                print
+                    print debug_str + "type: commit"
+                    #self._recv_commit(message)
+                #print message
+                #print
 
     def __str__(self):
         """Implement str(Acceptor)."""
