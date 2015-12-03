@@ -71,10 +71,10 @@ class Node(object):
             udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
             udp_socket.close()
         except KeyError as excinfo:
-            print "Unable to find leader, waiting until one is selected...\n"
+            print "Unable to find leader, waiting until one is selected..."
             while self._leader == None:
                 pass
-            print "Found leader, continuing..."
+            print "Found leader, continuing...\n"
             self.insert(appointment)
 
     def delete(self, appointment):
@@ -100,7 +100,7 @@ class Node(object):
             print "Unable to find leader, waiting until one is selected..."
             while self._leader == None:
                 pass
-            print "Found leader, continuing..."
+            print "Found leader, continuing...\n"
             self.delete(appointment)
 
     def paxos(self):
@@ -145,10 +145,10 @@ class Node(object):
                             if i not in slot_ids:
                                 #TODO: do adjustments for message_args length conditional above, adjust indexes used for messages
                                 dummy_message = ("propose", Calendar(), self._node_id, i)
-                                self._proposer._queue.append(dummy_message)
+                                self._proposer._command_queue.append(dummy_message)
                         '''
                         #Then we can add this new proposal
-                        self._proposer._queue.append(message)
+                        self._proposer._command_queue.append(message)
                     else:
                         logging.error(
                             "Propose message must be of form "
@@ -157,7 +157,7 @@ class Node(object):
                 #handle prepare messages
                 elif message_type == "prepare":
                     if arg_0_is_int:
-                        self._acceptor._queue.append(message)
+                        self._acceptor._command_queue.append(message)
                     else:
                         logging.error(
                             "Prepare message must be of form 'prepare' int")
@@ -165,7 +165,7 @@ class Node(object):
                 #handle promise messages
                 elif message_type == "promise":
                     if (arg_0_is_int and arg_1_is_calendar) or (arg_0_is_None and arg_1_is_None):
-                        self._proposer._queue.append(message)
+                        self._proposer._command_queue.append(message)
                     else:
                         logging.error(
                             "Promise message must be of form "
@@ -174,7 +174,7 @@ class Node(object):
                 #handle accept messages
                 elif message_type == "accept":
                     if arg_0_is_int and arg_1_is_calendar:
-                        self._acceptor._queue.append(message)
+                        self._acceptor._command_queue.append(message)
                     else:
                         logging.error(
                             "Accept message must be of form "
@@ -183,7 +183,7 @@ class Node(object):
                 #handle ack messages
                 elif message_type == "ack":
                     if arg_0_is_int and arg_1_is_calendar:
-                        self._proposer._queue.append(message)
+                        self._proposer._command_queue.append(message)
                     else:
                         logging.error(
                             "Ack message must be of form "
@@ -192,7 +192,7 @@ class Node(object):
                 #handle commit messages
                 elif message_type == "commit":
                     if arg_0_is_calendar:
-                        self._acceptor._queue.append(message)
+                        self._acceptor._command_queue.append(message)
                     else:
                         logging.error(
                             "Commit message must be of form 'commit' Calendar")

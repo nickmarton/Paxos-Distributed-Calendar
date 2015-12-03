@@ -23,7 +23,7 @@ class Acceptor(object):
         self._maxPrepare = -1
         self._accNum = None
         self._accVal = None
-        self._queue = []
+        self._command_queue = []
         self._ip_table = ip_table
         self._is_Acceptor = True
 
@@ -82,8 +82,8 @@ class Acceptor(object):
     def start(self):
         """Start the Acceptor; serve messages in its queue."""
         while True:
-            if self._queue:
-                message = self._queue.pop()
+            if self._command_queue:
+                message = self._command_queue.pop()
                 message_command_type = message[0]
                 debug_str = "Acceptor got message; "
                 if message_command_type == "prepare":
