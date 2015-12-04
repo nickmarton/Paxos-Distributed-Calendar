@@ -60,7 +60,10 @@ class Node(object):
         new_calendar = deepcopy(self._calendar)
         new_calendar += appointment
 
-        next_log_slot = max(self._log.keys()) + 1
+        if self._log.keys():
+            next_log_slot = max(self._log.keys()) + 1
+        else:
+            next_log_slot = 0
 
         #Then ask leader to propose the new Calendar
         try:
@@ -86,7 +89,10 @@ class Node(object):
             if self_appointment != appointment:
                 new_calendar += deepcopy(self_appointment)
 
-        next_log_slot = max(self._log.key()) + 1
+        if self._log.keys():
+            next_log_slot = max(self._log.keys()) + 1
+        else:
+            next_log_slot = 0
 
         #Then ask leader to propose the new Calendar
         try:
@@ -201,11 +207,23 @@ class Node(object):
                 logging.error("Invalid message parameters")
                 return
 
+        def _learn(self):
+            """Poll the Acceptor commits queue to update Node's log."""
+            while True:
+                if self._acceptor._commits_queue:
+                    (log_slot, v) = self._acceptor._commits_queue.pop()
+                    #print "LEARNED FOR SLOT " + str(log_slot) 
+                    self._log[log_slot] = v
+                    self._calendar = self._log[max(self._log.keys())]
+
+                time.sleep(1)
+
         def _do_paxos(self):
             """Do Paxos algorithm for this Node."""
             #Begin running the Acceptor and Proposer in the background
             thread.start_new_thread(self._acceptor.start, ())
             thread.start_new_thread(self._proposer.start, ())
+            thread.start_new_thread(_learn, (self,))
 
             IP, UDP_PORT = '0.0.0.0', self._ip_table[self._node_id][2]
             
@@ -507,10 +525,10 @@ def set_verbosity(verbose_level=3):
 def main():
     """Quick tests."""
     "schedule yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
-    "cancel yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
     "schedule xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
-    "cancel xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
     "schedule zo (user1,user2,user3) (12:30pm,1:30pm) Friday"
+    "cancel yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
+    "cancel xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
 
     a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 3])
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
@@ -518,35 +536,39 @@ def main():
     a4 = Appointment("yeee","MondAy","11:30am","12:30pm", [1])
     a5 = Appointment("lolololol","Thursday","11:30am","12:30pm", [1])
 
+    c = Calendar()
     c1 = Calendar(a1)
     c2 = Calendar(a1, a2)
     c3 = Calendar(a1, a2, a3)
     c4 = Calendar(a1, a2, a3, a4)
     c5 = Calendar(a1, a2, a3, a4, a5)
     
-    set_verbosity(3)
+    set_verbosity(4)
 
     N = Node(int(sys.argv[1]))
 
     
-    N._log[0] = c1
     '''
+    N._log[0] = c1
     N._log[1] = c2
     N._log[2] = c3
     N._log[3] = c4
     N._log[4] = c5
     '''
-    N._calendar = c1
+    N._calendar = c
 
     #try to load a previous state of this Node
+    '''
     try:
         N = Node.load()
     except ValueError:
         pass
     except IOError:
         pass
+    '''
 
-    N.elect_leader(poll_time=6, timeout=3)
+    #N.elect_leader(poll_time=6, timeout=3)
+    N._leader = 4
     N.paxos()
 
     print("@> Node Started")

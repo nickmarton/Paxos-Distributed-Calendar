@@ -7,7 +7,5 @@
     * updates according to constructors of Proposer and Acceptor
     * Node needs attributes "log" and "calendar"
 * **Code**
-    * Synod Algorithm
-        * Proposer/Acceptor functions
-    *MTU of AWS ec2 instance is ~1500 bytes, this is big problem for transmitting bigger calendars after pickling
-    *validation of user id's needed from Node
+    * MTU of AWS ec2 instance is ~1500 bytes, this is big problem for transmitting bigger calendars after pickling
+    * validation of user id's needed from Node

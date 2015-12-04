@@ -35,9 +35,13 @@ class Proposer(object):
 
     def _send_prepare(self, message):
         """Send prepare message as described in Synod Algorithm."""
-        m = self._current_proposal_number + 10
+        self._current_proposal_number += 10
+        m = self._current_proposal_number
 
         calendar, log_slot = message[1], message[2]
+
+        #If this Proposer's Node is the leader ,we need to store a copy of
+        #proposal it put forth for itself or on behalf of someone else
         self._my_proposals[log_slot] = (m, calendar)
 
         transmission = ("prepare", m, log_slot)
@@ -61,13 +65,14 @@ class Proposer(object):
             IP, UDP_PORT = IP_info[0], IP_info[2]
             self._send_UDP_message(transmission, IP, UDP_PORT)
 
-    def _recv_ack(self):
+    def _recv_ack(self, message):
         """Receive ack message."""
-        pass
+        accNum, accVal, log_slot, sender_ID = message[1:]
+        self._ack_queues[log_slot][sender_ID] = accVal
 
-    def _send_commit(self):
+    def _send_commit(self, v, log_slot):
         """Send commit message as described in Synod Algorithm."""
-        transmission = ("commit", )
+        transmission = ("commit", v, log_slot)
         for ID, IP_info in self._ip_table.items():
             IP, UDP_PORT = IP_info[0], IP_info[2]
             self._send_UDP_message(transmission, IP, UDP_PORT)
@@ -97,39 +102,64 @@ class Proposer(object):
                         other_ids = [uid for uid in slot_queue.keys() if uid != my_id]
 
                         #try to choose largest accNum accVal pair
-                        m, v = -1, -1
-                        for other_id in other_ids:
+                        v = -1
+                        for other_id in slot_queue.keys():
                             accNum, accVal = slot_queue[other_id]
                             if accNum != None and accVal != None:
                                 if accNum > m:
-                                    m, v = accNum, accVal
+                                    m, v = accVal, self._my_proposals[slot][0]
 
                         #Either only this Proposer's Node is up or everyone
                         #answered None, either way choose this Proposer's value
-                        if m == -1 and v == -1:
+                        if v == -1:
                             m, v = self._my_proposals[slot]
 
                         self._send_accept(m, v, slot)
 
-                time.sleep(.1)
+                time.sleep(1)
+
+        def _listen_to_acks(self):
+            "Begin listening for majority of promises on each log slot"
+            import math
+            import time
+            while True:
+                log_slots = self._promise_queues.keys()
+                num_nodes = len(self._ip_table.keys())
+                majority = int(math.ceil(float(num_nodes) / 2.0))
+                
+                #for log slots for which there has been at least one promise
+                for slot in log_slots:
+                    #get the queue for particular log slot and calulate number
+                    #of Acceptors that acked
+                    slot_queue = self._ack_queues[slot]
+                    num_acks = len(slot_queue.keys())
+
+                    #if this Proposer has received a majority of responses
+                    #send commit(v, log_slot)
+                    if num_acks >= majority:
+                        v = slot_queue[slot_queue.keys()[0]]
+                        self._send_commit(v, slot)
+
+                time.sleep(1)
 
         import thread
         thread.start_new_thread(_listen_to_promises, (self,))
+        thread.start_new_thread(_listen_to_acks, (self,))
 
         while True:
             if self._command_queue:
                 message = self._command_queue.pop()
                 message_command_type = message[0]
-                debug_str = "Proposer got message; "
+                debug_str = "Proposer; "
                 if message_command_type == "propose":
-                    print debug_str + "type: propose"
+                    #print debug_str + "type: propose " + str(message[2])
                     self._send_prepare(message)
                 if message_command_type == "promise":
-                    print debug_str + "type: promise"
+                    #print debug_str + "type: promise with slot = " + str(message[3])
                     self._recv_promise(message)
                 if message_command_type == "ack":
-                    print debug_str + "type: ack"
-                    #self.recv_ack(message)
+                    #print debug_str + "type: ack "  + str(message[3])
+                    self._recv_ack(message)
                 #print message
                 #print
 

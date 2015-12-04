@@ -50,6 +50,9 @@ class Calendar(object):
 
     def __eq__(self, other):
         """Implement == operator for Calendar objects; unordered equality."""
+        if other == None:
+            return False
+
         if not hasattr(other, "_is_Calendar"):
             raise TypeError("both == operands must be Calendar objects")
 

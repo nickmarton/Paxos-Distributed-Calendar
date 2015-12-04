@@ -24,6 +24,7 @@ class Acceptor(object):
         self._accNum = None
         self._accVal = None
         self._command_queue = []
+        self._commits_queue = []
         self._ip_table = ip_table
         self._is_Acceptor = True
 
@@ -43,7 +44,8 @@ class Acceptor(object):
         Prepare messages of form ("prepare", m, log_slot, sender_ID)
         """
 
-        m, log_slot, sender_ID = message[1], message[2], message[3]
+        m, log_slot, sender_ID = message[1:]
+
         if m > self._maxPrepare:
             self._maxPrepare = m
             IP, UDP_PORT = self._ip_table[sender_ID][0], self._ip_table[sender_ID][2]
@@ -59,16 +61,16 @@ class Acceptor(object):
         Handle reception of accept message as described in Synod Algorithm.
         """
 
-        m, v, sender_ID = message[1], message[2], message[3]
+        m, v, log_slot, sender_ID = message[1:]
         if m >= self._maxPrepare:
             self._accNum = m
             self._accVal = v
             IP, UDP_PORT = self._ip_table[sender_ID][0], self._ip_table[sender_ID][2]
-            self._send_ack(IP, UDP_PORT, self._accNum, self._accVal)
+            self._send_ack(IP, UDP_PORT, self._accNum, self._accVal, log_slot)
 
-    def _send_ack(self, IP, PORT, accNum, accVal):
+    def _send_ack(self, IP, PORT, accNum, accVal, log_slot):
         """Send ack with given accNum, accVal to given IP, PORT."""
-        transmission = ("ack", accNum, accVal)
+        transmission = ("ack", accNum, accVal, log_slot)
         self._send_UDP_message(transmission, IP, PORT)
 
     def _recv_commit(self, message):
@@ -76,8 +78,8 @@ class Acceptor(object):
         Handle reception of commit message as described in Synod Algorithm.
         """
 
-        v = message[1]
-        print "TO: Record",v,"in log"
+        v, log_slot = message[1], message[2]
+        self._commits_queue.append((log_slot, v))
 
     def start(self):
         """Start the Acceptor; serve messages in its queue."""
@@ -85,16 +87,16 @@ class Acceptor(object):
             if self._command_queue:
                 message = self._command_queue.pop()
                 message_command_type = message[0]
-                debug_str = "Acceptor got message; "
+                debug_str = "Acceptor; "
                 if message_command_type == "prepare":
-                    print debug_str + "type: prepare"
+                    #print debug_str + "type: prepare with slot = " + str(message[2]) + ", m = " + str(message[1])
                     self._recv_prepare(message)
                 elif message_command_type == "accept":
-                    print debug_str + "type: accept"
-                    #self._recv_accept(message)
+                    #print debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])
+                    self._recv_accept(message)
                 elif message_command_type == "commit":
-                    print debug_str + "type: commit"
-                    #self._recv_commit(message)
+                    #print debug_str + "type: commit " + + str(message[2])
+                    self._recv_commit(message)
                 #print message
                 #print
 
