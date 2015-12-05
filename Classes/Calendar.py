@@ -232,10 +232,14 @@ class Calendar(object):
             second_str = first_str[1].split(" with ")
             user_list = second_str[1].split(" and ")
             users_final = []
+
             for part in user_list:
-                users = [item[:-1] for item in part.split(" ")]
-                for user in users:
-                    users_final.append(int(user))
+                users = part.split(" ")
+                for part in users:
+                    if len(part) == 2:
+                        users_final.append(int(part[:-1]))
+                    else:
+                        users_final.append(int(part))
 
 
             dates_part_1 = first_str[1].split(" from ")
@@ -244,10 +248,7 @@ class Calendar(object):
             end_time = times[1].split(" with ")[0]
             appointment_day = dates_part_1[0]
 
-            print(appt_name)
-            print(users_final)
-            print(appointment_day)
-            print(start_time)
+
             start_time_hour, start_time_minute = [ int(comp_time) for comp_time in start_time.split(":") ]
             end_time_hour, end_time_minute = [ int(comp_time) for comp_time in end_time.split(":")]
             start_time_final = datetime.time(start_time_hour, start_time_minute)
@@ -256,7 +257,7 @@ class Calendar(object):
             appointment = Appointment(appt_name, appointment_day, start_time_final, end_time_final, users_final)
             appt_for_calendar.append(appointment)
 
-        calendar = Calendar(*appt_for_calendar)
+        return Calendar(*appt_for_calendar)
 
 
     def __str__(self):
@@ -276,9 +277,10 @@ def main():
     a2 = Appointment("yerboi","saturday","1:30am","11:30pm", [1, 4, 5])
     a3 = Appointment("we out here","saturday","11:30am","12:30pm", [1])
     c3 = Calendar(a1,a3)
-    print(Calendar.serialize(c3))
-    print("#####################")
-    Calendar.deserialize(Calendar.serialize(c3))
+    new_calendar = Calendar.deserialize(Calendar.serialize(c3))
+
+    print(c3)
+    print(newCalendar)
 
     pass
 
