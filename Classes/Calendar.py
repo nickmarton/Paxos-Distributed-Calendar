@@ -274,13 +274,26 @@ class Calendar(object):
 def main():
     """Quick tests."""
     a1 = Appointment("yo","saturday","12:30pm","1:30pm", [1, 2, 3])
-    a2 = Appointment("yerboi","saturday","1:30am","11:30pm", [1, 4, 5])
-    a3 = Appointment("we out here","saturday","11:30am","12:30pm", [1])
-    c3 = Calendar(a1,a3)
-    new_calendar = Calendar.deserialize(Calendar.serialize(c3))
+    a3 = Appointment("yo1","saturday","1:30am","12:30pm", [1])
+    a4 = Appointment("yo2","sunday","2:30am","12:30pm", [1])
+    a5 = Appointment("yo3","monday","12:30am","3:30am", [1])
+    a6 = Appointment("yo4","tuesday","4:30am","12:30pm", [1])
+    a7 = Appointment("yo5","wednesday","5:30am","12:30pm", [1])
+    a8 = Appointment("yo6","thursday","6:30am","12:30pm", [1])
+    a9 = Appointment("yo7","friday","7:30am","12:30pm", [1])
+    a10 = Appointment("yo8","monday","8:30am","9:30am", [1])
+    a11= Appointment("yo9","tuesday","12:30pm","2:30pm", [1])
 
-    print(c3)
-    print(newCalendar)
+    c3 = Calendar(a1, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+    
+    serial_calendar = Calendar.serialize(c3)
+
+    import pickle
+    import sys
+    msg = pickle.dumps(serial_calendar)
+    size = sys.getsizeof(msg)
+
+    print "size", size
 
     pass
 
