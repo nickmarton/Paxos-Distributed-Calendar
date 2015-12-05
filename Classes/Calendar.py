@@ -1,6 +1,8 @@
 """Calendar class to wrap list of Appointments for Paxos Log Entries."""
 
 from Appointment import Appointment
+import datetime
+
 
 class Calendar(object):
     """
@@ -212,6 +214,51 @@ class Calendar(object):
         """Return sorted list of Appointment names in this Calendar object."""
         return sorted([appt._name for appt in self._appointments])
 
+    @staticmethod
+    def serialize(self):
+        """Return a string representation of the calendar with appointments seperated
+            by a hash delimiter"""
+        return "#".join([str(appt) for appt in self._appointments])
+    @staticmethod
+    def deserialize(serial_msg):
+        """Return a Calendar object parsed from a serialized string"""
+        appt_list = serial_msg.split("#")
+        appt_for_calendar = []
+        for appt_str in appt_list:
+            
+            first_str = appt_str.split(" on ")
+            appt_name = first_str[0].split("Appointment ")[1]
+
+            second_str = first_str[1].split(" with ")
+            user_list = second_str[1].split(" and ")
+            users_final = []
+            for part in user_list:
+                users = [item[:-1] for item in part.split(" ")]
+                for user in users:
+                    users_final.append(int(user))
+
+
+            dates_part_1 = first_str[1].split(" from ")
+            times = dates_part_1[1].split(" to ")
+            start_time = times[0]
+            end_time = times[1].split(" with ")[0]
+            appointment_day = dates_part_1[0]
+
+            print(appt_name)
+            print(users_final)
+            print(appointment_day)
+            print(start_time)
+            start_time_hour, start_time_minute = [ int(comp_time) for comp_time in start_time.split(":") ]
+            end_time_hour, end_time_minute = [ int(comp_time) for comp_time in end_time.split(":")]
+            start_time_final = datetime.time(start_time_hour, start_time_minute)
+            end_time_final = datetime.time(end_time_hour, end_time_minute)
+
+            appointment = Appointment(appt_name, appointment_day, start_time_final, end_time_final, users_final)
+            appt_for_calendar.append(appointment)
+
+        calendar = Calendar(*appt_for_calendar)
+
+
     def __str__(self):
         """Implement str(Calendar) ofr Calendar object."""
         ret_str = "Calendar:\n"
@@ -225,6 +272,14 @@ class Calendar(object):
 
 def main():
     """Quick tests."""
+    a1 = Appointment("yo","saturday","12:30pm","1:30pm", [1, 2, 3])
+    a2 = Appointment("yerboi","saturday","1:30am","11:30pm", [1, 4, 5])
+    a3 = Appointment("we out here","saturday","11:30am","12:30pm", [1])
+    c3 = Calendar(a1,a3)
+    print(Calendar.serialize(c3))
+    print("#####################")
+    Calendar.deserialize(Calendar.serialize(c3))
+
     pass
 
 if __name__ == "__main__":
