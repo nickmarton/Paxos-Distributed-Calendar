@@ -1,6 +1,8 @@
 """Calendar class to wrap list of Appointments for Paxos Log Entries."""
 
 from Appointment import Appointment
+import datetime
+
 
 class Calendar(object):
     """
@@ -212,6 +214,52 @@ class Calendar(object):
         """Return sorted list of Appointment names in this Calendar object."""
         return sorted([appt._name for appt in self._appointments])
 
+    @staticmethod
+    def serialize(self):
+        """Return a string representation of the calendar with appointments seperated
+            by a hash delimiter"""
+        return "#".join([str(appt) for appt in self._appointments])
+    @staticmethod
+    def deserialize(serial_msg):
+        """Return a Calendar object parsed from a serialized string"""
+        appt_list = serial_msg.split("#")
+        appt_for_calendar = []
+        for appt_str in appt_list:
+            
+            first_str = appt_str.split(" on ")
+            appt_name = first_str[0].split("Appointment ")[1]
+
+            second_str = first_str[1].split(" with ")
+            user_list = second_str[1].split(" and ")
+            users_final = []
+
+            for part in user_list:
+                users = part.split(" ")
+                for part in users:
+                    if len(part) == 2:
+                        users_final.append(int(part[:-1]))
+                    else:
+                        users_final.append(int(part))
+
+
+            dates_part_1 = first_str[1].split(" from ")
+            times = dates_part_1[1].split(" to ")
+            start_time = times[0]
+            end_time = times[1].split(" with ")[0]
+            appointment_day = dates_part_1[0]
+
+
+            start_time_hour, start_time_minute = [ int(comp_time) for comp_time in start_time.split(":") ]
+            end_time_hour, end_time_minute = [ int(comp_time) for comp_time in end_time.split(":")]
+            start_time_final = datetime.time(start_time_hour, start_time_minute)
+            end_time_final = datetime.time(end_time_hour, end_time_minute)
+
+            appointment = Appointment(appt_name, appointment_day, start_time_final, end_time_final, users_final)
+            appt_for_calendar.append(appointment)
+
+        return Calendar(*appt_for_calendar)
+
+
     def __str__(self):
         """Implement str(Calendar) ofr Calendar object."""
         ret_str = "Calendar:\n"
@@ -225,6 +273,28 @@ class Calendar(object):
 
 def main():
     """Quick tests."""
+    a1 = Appointment("yo","saturday","12:30pm","1:30pm", [1, 2, 3])
+    a3 = Appointment("yo1","saturday","1:30am","12:30pm", [1])
+    a4 = Appointment("yo2","sunday","2:30am","12:30pm", [1])
+    a5 = Appointment("yo3","monday","12:30am","3:30am", [1])
+    a6 = Appointment("yo4","tuesday","4:30am","12:30pm", [1])
+    a7 = Appointment("yo5","wednesday","5:30am","12:30pm", [1])
+    a8 = Appointment("yo6","thursday","6:30am","12:30pm", [1])
+    a9 = Appointment("yo7","friday","7:30am","12:30pm", [1])
+    a10 = Appointment("yo8","monday","8:30am","9:30am", [1])
+    a11= Appointment("yo9","tuesday","12:30pm","2:30pm", [1])
+
+    c3 = Calendar(a1, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+    
+    serial_calendar = Calendar.serialize(c3)
+
+    import pickle
+    import sys
+    msg = pickle.dumps(serial_calendar)
+    size = sys.getsizeof(msg)
+
+    print "size", size
+
     pass
 
 if __name__ == "__main__":
