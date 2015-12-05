@@ -458,7 +458,8 @@ class Node(object):
         if argv[0] == "schedule":
             try:
                 appointment = _parse_appointment(argv)
-
+                for user in appointment._participants:
+                    node._ip_table[user]
                 #determine if the Appointment the user is trying to schedule
                 #is already in their Calendar or in conflict with some
                 #Appointment in their Calendar
@@ -474,6 +475,8 @@ class Node(object):
                     print "User scheduled appointment already in their " + \
                             "own Calendar or in conflict with their own " + \
                             "Calendar; ignoring.\n"
+            except KeyError:
+                print "User id is not in the IP table."
             except ValueError as excinfo:
                 print excinfo
                 print
@@ -524,13 +527,13 @@ def set_verbosity(verbose_level=3):
 
 def main():
     """Quick tests."""
-    "schedule yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
+    "schedule yaboi (user0,user1,user2,user8) (4:00pm,6:00pm) Friday"
     "schedule xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
     "schedule zo (user1,user2,user3) (12:30pm,1:30pm) Friday"
     "cancel yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
     "cancel xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
 
-    a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 3])
+    a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 8])
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
     a3 = Appointment("lol","saturday","11:30am","12:30pm", [1])
     a4 = Appointment("yeee","MondAy","11:30am","12:30pm", [1])
@@ -569,7 +572,7 @@ def main():
 
     #N.elect_leader(poll_time=6, timeout=3)
     N._leader = 4
-    N.paxos()
+    #N.paxos()
 
     print("@> Node Started")
     while True:
