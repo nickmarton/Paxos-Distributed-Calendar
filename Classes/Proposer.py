@@ -18,6 +18,7 @@ class Proposer(object):
         self._uid = uid
         self._current_proposal_number = uid
         self._command_queue = []
+        self._committed_slots = []
         self._my_proposals = {}
         from collections import defaultdict
         self._promise_queues = defaultdict(dict)
@@ -96,26 +97,26 @@ class Proposer(object):
                     slot_queue = self._promise_queues[slot]
                     num_promises = len(slot_queue.keys())
 
+                    #other_ids = [node_id for node_id in slot_queue.keys() if node_id != self._uid]
+
                     #if this Proposer has received a majority of responses
                     #send accept(m, v, log_slot)
                     if num_promises >= majority:
-                        my_id = self._uid
-                        other_ids = [uid for uid in slot_queue.keys() if uid != my_id]
-
                         #try to choose largest accNum accVal pair
-                        v = -1
-                        for other_id in slot_queue.keys():
-                            accNum, accVal = slot_queue[other_id]
+                        m, v = -1, -1
+                        for node_id in slot_queue.keys():#other_ids:
+                            accNum, accVal = slot_queue[node_id]
                             if accNum != None and accVal != None:
                                 if accNum > m:
-                                    m, v = accVal, self._my_proposals[slot][0]
+                                    m, v = self._my_proposals[slot][0], accVal
 
                         #Either only this Proposer's Node is up or everyone
                         #answered None, either way choose this Proposer's value
-                        if v == -1:
+                        if not hasattr(v, "_is_Calendar"):
                             m, v = self._my_proposals[slot]
 
-                        self._send_accept(m, v, slot)
+                        if slot not in self._committed_slots:
+                            self._send_accept(m, v, slot)
 
                 if self._terminate:
                     break
@@ -140,8 +141,12 @@ class Proposer(object):
                     #if this Proposer has received a majority of responses
                     #send commit(v, log_slot)
                     if num_acks >= majority:
-                        v = slot_queue[slot_queue.keys()[0]]
-                        self._send_commit(v, slot)
+
+                        #Optimization
+                        if slot not in self._committed_slots:
+                            v = slot_queue[slot_queue.keys()[0]]
+                            self._send_commit(v, slot)
+                            self._committed_slots.append(slot)
 
                 if self._terminate:
                     break

@@ -183,6 +183,7 @@ class Node(object):
                     if arg_0_is_int and arg_1_is_calendar:
                         self._acceptor._command_queue.append(message)
                     else:
+                        print ' '.join([str(i) for i in message])
                         logging.error(
                             "Accept message must be of form "
                             "'accept' int Calendar")
@@ -271,11 +272,14 @@ class Node(object):
             recv_socket.bind((IP, TCP_PORT))
             #backlog; 1 for each Node besides self
             recv_socket.listen(4)
+            prev_leader = None
 
             while True:
                 thread.start_new_thread(bully_algorithm, (self, recv_socket, timeout))
                 time.sleep(poll_time)
-                logging.debug("NEW LEADER IS: " + str(self._leader))
+                if self._leader != prev_leader:
+                    logging.debug("NEW LEADER IS: " + str(self._leader))
+                    prev_leader = self._leader
 
             recv_socket.close()
 
@@ -559,12 +563,13 @@ def set_verbosity(verbose_level=3):
 def main():
     """Quick tests."""
     "schedule yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
+    "schedule xxboi (user1,user3,user4) (1:30am,11:30am) Wednesday"
     "schedule beez (user0,user1,user2,user3) (4:00pm,6:00pm) Saturday"
     "schedule beez2 (user0,user1,user2,user3) (3:00pm,4:00pm) Saturday"
-    "schedule xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
     "schedule zo (user1,user2,user3) (12:30pm,1:30pm) Friday"
+    "schedule hamma (user1,user2,user3) (1:00am,1:30am) Friday"
     "cancel yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
-    "cancel xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
+    "cancel xxboi (user1,user3,user4) (1:30am,11:30am) Wednesday"
 
     a1 = Appointment("zo","Friday","12:30pm","1:30pm", [1, 2, 8])
     a2 = Appointment("xxboi","Wednesday","1:30am","11:30am", [1, 4, 5])
@@ -603,9 +608,9 @@ def main():
         pass
     '''
 
-    #N.elect_leader(poll_time=6, timeout=3)
-    N._leader = 4
-    #N.paxos()
+    N.elect_leader(poll_time=6, timeout=3)
+    #N._leader = 4
+    N.paxos()
 
     print("@> Node Started")
     while True:

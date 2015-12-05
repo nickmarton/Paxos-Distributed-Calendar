@@ -22,8 +22,9 @@ class Acceptor(object):
     def __init__(self, ip_table):
         """Construct Acceptor object."""
         self._maxPrepare = -1
-        self._accNum = None
-        self._accVal = None
+        from collections import defaultdict
+        self._accNums = {}
+        self._accVals = {}
         self._command_queue = []
         self._commits_queue = []
         self._ip_table = ip_table
@@ -47,11 +48,16 @@ class Acceptor(object):
         """
 
         m, log_slot, sender_ID = message[1:]
+        
+        if log_slot not in self._accNums.keys():
+            self._accNums[log_slot] = None
+        if log_slot not in self._accVals.keys():
+            self._accVals[log_slot] = None
 
         if m > self._maxPrepare:
             self._maxPrepare = m
             IP, UDP_PORT = self._ip_table[sender_ID][0], self._ip_table[sender_ID][2]
-            self._send_promise(IP, UDP_PORT, self._accNum, self._accVal, log_slot)
+            self._send_promise(IP, UDP_PORT, self._accNums[log_slot], self._accVals[log_slot], log_slot)
 
     def _send_promise(self, IP, PORT, accNum, accVal, log_slot):
         """Send promise message with given accNum, accVal to given IP, PORT."""
@@ -64,11 +70,17 @@ class Acceptor(object):
         """
 
         m, v, log_slot, sender_ID = message[1:]
+
+        if log_slot not in self._accNums.keys():
+            self._accNums[log_slot] = None
+        if log_slot not in self._accVals.keys():
+            self._accVals[log_slot] = None
+
         if m >= self._maxPrepare:
-            self._accNum = m
-            self._accVal = v
+            self._accNums[log_slot] = m
+            self._accVals[log_slot] = v
             IP, UDP_PORT = self._ip_table[sender_ID][0], self._ip_table[sender_ID][2]
-            self._send_ack(IP, UDP_PORT, self._accNum, self._accVal, log_slot)
+            self._send_ack(IP, UDP_PORT, self._accNums[log_slot], self._accVals[log_slot], log_slot)
 
     def _send_ack(self, IP, PORT, accNum, accVal, log_slot):
         """Send ack with given accNum, accVal to given IP, PORT."""
@@ -108,8 +120,8 @@ class Acceptor(object):
     def __str__(self):
         """Implement str(Acceptor)."""
         ret_str = "Acceptor\n\tMaxPrepare: " + str(self._maxPrepare)
-        ret_str += "\n\tAccNum: " + str(self._accNum)
-        ret_str += "\n\tAccVal: " + str(self._accVal)
+        ret_str += "\n\tAccNum: " + str(self._accNums)
+        ret_str += "\n\tAccVal: " + str(self._accVals)
         return ret_str
 
     def __repr__(self):
