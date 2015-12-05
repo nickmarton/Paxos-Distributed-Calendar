@@ -51,6 +51,7 @@ class Node(object):
         self._acceptor = Acceptor(self._ip_table)
         self._log = {}
         self._leader = None
+        self._terminate = False
         self._is_Node = True
 
     def insert(self, appointment):
@@ -207,7 +208,7 @@ class Node(object):
                 logging.error("Invalid message parameters")
                 return
 
-        def _learn(self):
+        def _learner(self):
             """Poll the Acceptor commits queue to update Node's log."""
             while True:
                 if self._acceptor._commits_queue:
@@ -216,14 +217,26 @@ class Node(object):
                     self._log[log_slot] = v
                     self._calendar = self._log[max(self._log.keys())]
 
-                time.sleep(1)
+                if self._terminate:
+                    break
+
+                time.sleep(.001)
+
+        def _shut_down(self):
+            """."""
+            while True:
+                if self._terminate:
+                    self._proposer._terminate = True
+                    self._acceptor._terminate = True
+                    break
 
         def _do_paxos(self):
             """Do Paxos algorithm for this Node."""
             #Begin running the Acceptor and Proposer in the background
-            thread.start_new_thread(self._acceptor.start, ())
             thread.start_new_thread(self._proposer.start, ())
-            thread.start_new_thread(_learn, (self,))
+            thread.start_new_thread(self._acceptor.start, ())
+            thread.start_new_thread(_learner, (self,))
+            thread.start_new_thread(_shut_down, (self,))
 
             IP, UDP_PORT = '0.0.0.0', self._ip_table[self._node_id][2]
             
@@ -231,6 +244,11 @@ class Node(object):
             sock.bind((IP, UDP_PORT))
             while True:
                 data, addr = sock.recvfrom(4096) # buffer size is 1024 bytes
+                
+                if data == "terminate":
+                    sock.close()
+                    break
+
                 #Quick lookup of ID of sender from IP received
                 sender_ID = filter(
                     lambda row: row[1][0] == addr[0],
@@ -240,8 +258,6 @@ class Node(object):
                 #bind sender_ID to message
                 message = message + (sender_ID,)
                 _parse_message(message)
-
-                time.sleep(.01)
 
         thread.start_new_thread(_do_paxos, (self,))
 
@@ -264,6 +280,21 @@ class Node(object):
             recv_socket.close()
 
         thread.start_new_thread(_do_leader_election, (self, poll_time, timeout))
+
+    def terminate(self):
+        """Initiate termination protocol; close all threads."""
+        #Set termination field
+        self._terminate = True
+       
+        #Send special termination message to self
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        my_ip_info = self._ip_table[self._node_id]
+        my_IP, my_UDP_PORT = my_ip_info[0], my_ip_info[2]
+        s.sendto("terminate", (my_IP, my_UDP_PORT))
+        s.close()
+
+        #Sleep for a second to ensure everything closes before main
+        time.sleep(1)
             
     @staticmethod
     def save(Node, path="./", filename="state.pkl"):
@@ -525,6 +556,8 @@ def set_verbosity(verbose_level=3):
 def main():
     """Quick tests."""
     "schedule yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
+    "schedule beez (user0,user1,user2,user3) (4:00pm,6:00pm) Saturday"
+    "schedule beez2 (user0,user1,user2,user3) (3:00pm,4:00pm) Saturday"
     "schedule xxboi (user1,user4,user5) (1:30am,11:30am) Wednesday"
     "schedule zo (user1,user2,user3) (12:30pm,1:30pm) Friday"
     "cancel yaboi (user0,user1,user2,user3) (4:00pm,6:00pm) Friday"
@@ -576,6 +609,7 @@ def main():
         message = raw_input('')
         if message == "quit":
             Node.save(N)
+            N.terminate()
             break
         else:
             Node._parse_command(message, N)

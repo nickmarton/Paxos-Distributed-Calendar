@@ -1,4 +1,5 @@
 """Proposer class for Paxos Calendar."""
+import time
 
 class Proposer(object):
     """
@@ -22,6 +23,7 @@ class Proposer(object):
         self._promise_queues = defaultdict(dict)
         self._ack_queues = defaultdict(dict)
         self._ip_table = ip_table
+        self._terminate = False
         self._is_Proposer = True
 
     def _send_UDP_message(self, data, IP, UDP_PORT):
@@ -82,7 +84,6 @@ class Proposer(object):
         def _listen_to_promises(self):
             "Begin listening for majority of promises on each log slot"
             import math
-            import time
             while True:
                 log_slots = self._promise_queues.keys()
                 num_nodes = len(self._ip_table.keys())
@@ -116,12 +117,14 @@ class Proposer(object):
 
                         self._send_accept(m, v, slot)
 
-                time.sleep(1)
+                if self._terminate:
+                    break
+
+                time.sleep(.001)
 
         def _listen_to_acks(self):
             "Begin listening for majority of promises on each log slot"
             import math
-            import time
             while True:
                 log_slots = self._promise_queues.keys()
                 num_nodes = len(self._ip_table.keys())
@@ -140,7 +143,10 @@ class Proposer(object):
                         v = slot_queue[slot_queue.keys()[0]]
                         self._send_commit(v, slot)
 
-                time.sleep(1)
+                if self._terminate:
+                    break
+
+                time.sleep(.001)
 
         import thread
         thread.start_new_thread(_listen_to_promises, (self,))
@@ -152,7 +158,7 @@ class Proposer(object):
                 message_command_type = message[0]
                 debug_str = "Proposer; "
                 if message_command_type == "propose":
-                    #print debug_str + "type: propose " + str(message[2])
+                    print debug_str + "type: propose " + str(message[2])
                     self._send_prepare(message)
                 if message_command_type == "promise":
                     #print debug_str + "type: promise with slot = " + str(message[3])
@@ -160,8 +166,11 @@ class Proposer(object):
                 if message_command_type == "ack":
                     #print debug_str + "type: ack "  + str(message[3])
                     self._recv_ack(message)
-                #print message
-                #print
+
+            if self._terminate:
+                break
+
+            time.sleep(.001)
 
     def __str__(self):
         """Implement str(Proposer)."""

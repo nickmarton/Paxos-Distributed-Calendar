@@ -2,6 +2,7 @@
 
 import pickle
 import socket
+import time
 
 class Acceptor(object):
     """
@@ -26,6 +27,7 @@ class Acceptor(object):
         self._command_queue = []
         self._commits_queue = []
         self._ip_table = ip_table
+        self._terminate = False
         self._is_Acceptor = True
 
     def _send_UDP_message(self, data, IP, UDP_PORT):
@@ -89,7 +91,7 @@ class Acceptor(object):
                 message_command_type = message[0]
                 debug_str = "Acceptor; "
                 if message_command_type == "prepare":
-                    #print debug_str + "type: prepare with slot = " + str(message[2]) + ", m = " + str(message[1])
+                    print debug_str + "type: prepare with slot = " + str(message[2]) + ", m = " + str(message[1])
                     self._recv_prepare(message)
                 elif message_command_type == "accept":
                     #print debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])
@@ -97,8 +99,11 @@ class Acceptor(object):
                 elif message_command_type == "commit":
                     #print debug_str + "type: commit " + + str(message[2])
                     self._recv_commit(message)
-                #print message
-                #print
+
+            if self._terminate:
+                break
+
+            time.sleep(.001)
 
     def __str__(self):
         """Implement str(Acceptor)."""
