@@ -24,13 +24,15 @@
 	\section{Leader Election}
 		Leader election is done in the Node.py file, and is initiated when a Node does not have a value for current leader. The method elect\_leader creates a thread that listens for TCP connections from other nodes. The leader is then determined using the Bully algorithm. 
 	\section{Node}
-		Node acts as a single instance of a machine running the Paxos algorithm. Every Node creates an Acceptor thread and Proposer thread.  The implementation of the Paxos algorithm is also in the Node class implementation. The Node receives incoming messages and hands that message it to its Acceptor and Proposer classes, depending on the message type.
+		The Node class acts as a single instance of a machine running the Paxos algorithm. Every Node creates a UDP server thread, and Acceptor and Proposer objects as a threads.
+		The UDP server thread waits for messages from other Node's Acceptors and Proposers and parses them. After parsing the UDP message, the contents are given to the corresponding subroutine's queue. A learner thread is created to poll the commit queue of the Node's acceptor in order to fill the log of commits and update the calendar.  The implementation of the Paxos algorithm is also in the Node class. 
 	\subsection{Acceptor}
-	The Acceptor class is implemented in Acceptor.py. 
+		The Acceptor class is implemented in Acceptor.py. The method "start" creates a listener that waits for messages passed from the Node class. The Acceptor class's queue is then serviced in a FIFO order. The Acceptor class will send the message required by the servicing of an item in a queue to all other Nodes. All required recieve and send messages are impelemented in the Acceptor class.
 	\subsection{Proposer}
-	\section{Calendar}
-	\section{Appointment}
-		\section{Paxos}
+		The Proposer class is implemented in Proposer.py. Proposer starts a listener thread that waits for messages passed to its queue from the Node class. After processing an item in its queue in a FIFO order, it will send a message to all other Nodes. The required methods for processing a specific type of message are implemented in Proposer.py.
+	\section{Calendar and Appointments}
+		The implementation of the Appointment class can be found in Appointment.py. The Appointment class acts as a specific entry in the calendar. The Calendar classes' implementation can be found in Calendar.py. The Calendar class acts as a collection of Appointment objects, and has the necessary methods for comparing Calendar objects, self serialization for sending, and output representation.
+	\section{Paxos}
 		The Paxos algorithm is implemented in Node.py, and starts several subroutines. The subroutine  \_do\_paxos creates a UDP server thread, that listens for incoming messages from other Nodes. These messages are then handled by the \_parse\_message method, which hands them to the Acceptor and Proposer
-		threads at that Node. 
+		threads at that Node.  The entry that is filled in the Paxos' algorithms log is a version of the Calendar. So when a Proposer proposes a new value for a log entry, it is a new version of the calendar.
 \end{document}
