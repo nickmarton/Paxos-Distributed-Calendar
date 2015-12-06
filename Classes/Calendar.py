@@ -215,19 +215,25 @@ class Calendar(object):
         return sorted([appt._name for appt in self._appointments])
 
     @staticmethod
-    def serialize(self):
-        """Return a string representation of the calendar with appointments seperated
-            by a hash delimiter"""
-        return "#".join([str(appt) for appt in self._appointments])
+    def serialize(calendar):
+        """Return a string representation of the calendar with appointments seperated by a hash delimiter"""
+        if calendar:
+            return "#".join([str(appt) for appt in calendar._appointments])
+        else:
+            return None
+
     @staticmethod
     def deserialize(serial_msg):
         """Return a Calendar object parsed from a serialized string"""
+        if not serial_msg:
+            return None
+
         appt_list = serial_msg.split("#")
         appt_for_calendar = []
         for appt_str in appt_list:
             
             first_str = appt_str.split(" on ")
-            appt_name = first_str[0].split("Appointment ")[1]
+            appt_name = first_str[0].split("Appointment ")[1][1:-1]
 
             second_str = first_str[1].split(" with ")
             user_list = second_str[1].split(" and ")
@@ -258,7 +264,6 @@ class Calendar(object):
             appt_for_calendar.append(appointment)
 
         return Calendar(*appt_for_calendar)
-
 
     def __str__(self):
         """Implement str(Calendar) ofr Calendar object."""
@@ -295,6 +300,9 @@ def main():
 
     print "size", size
 
+    uC = Calendar.deserialize(serial_calendar)
+
+    print c3 == uC
     pass
 
 if __name__ == "__main__":
