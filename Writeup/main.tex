@@ -22,7 +22,15 @@
 	\maketitle
 	
 	\section{Leader Election}
-	
-	\section{Paxos}
-	
+		Leader election is done in the Node.py file, and is initiated when a Node does not have a value for current leader. The method elect\_leader creates a thread that listens for TCP connections from other nodes. The leader is then determined using the Bully algorithm. 
+	\section{Node}
+		Node acts as a single instance of a machine running the Paxos algorithm. Every Node creates an Acceptor thread and Proposer thread.  The implementation of the Paxos algorithm is also in the Node class implementation. The Node receives incoming messages and hands that message it to its Acceptor and Proposer classes, depending on the message type.
+	\subsection{Acceptor}
+	The Acceptor class is implemented in Acceptor.py. 
+	\subsection{Proposer}
+	\section{Calendar}
+	\section{Appointment}
+		\section{Paxos}
+		The Paxos algorithm is implemented in Node.py, and starts several subroutines. The subroutine  \_do\_paxos creates a UDP server thread, that listens for incoming messages from other Nodes. These messages are then handled by the \_parse\_message method, which hands them to the Acceptor and Proposer
+		threads at that Node. 
 \end{document}
