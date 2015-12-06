@@ -76,6 +76,7 @@ class Acceptor(object):
         if log_slot not in self._accVals.keys():
             self._accVals[log_slot] = None
 
+
         if m >= self._maxPrepare:
             self._accNums[log_slot] = m
             self._accVals[log_slot] = v
@@ -97,19 +98,22 @@ class Acceptor(object):
 
     def start(self):
         """Start the Acceptor; serve messages in its queue."""
+        stap = []
         while True:
             if self._command_queue:
                 message = self._command_queue.pop()
                 message_command_type = message[0]
                 debug_str = "Acceptor; "
                 if message_command_type == "prepare":
-                    print debug_str + "type: prepare with slot = " + str(message[2]) + ", m = " + str(message[1])
+                    #print debug_str + "type: prepare with slot = " + str(message[2]) + ", m = " + str(message[1])
                     self._recv_prepare(message)
                 elif message_command_type == "accept":
-                    #print debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])
+                    if (debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])) not in stap:
+                        #print debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])
+                        stap.append(debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1]))
                     self._recv_accept(message)
                 elif message_command_type == "commit":
-                    #print debug_str + "type: commit " + + str(message[2])
+                    #print debug_str + "type: commit " + str(message[2])
                     self._recv_commit(message)
 
             if self._terminate:

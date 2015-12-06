@@ -146,14 +146,17 @@ class Node(object):
                     if arg_0_is_calendar:
                         #If in this conditional, we are the leader.
                         #First we have to fill any empty log slots
-                        '''
-                        slot_ids = self._log.keys()
-                        for i in range(max(slot_ids)):
-                            if i not in slot_ids:
-                                #TODO: do adjustments for message_args length conditional above, adjust indexes used for messages
-                                dummy_message = ("propose", Calendar(), self._node_id, i)
-                                self._proposer._command_queue.append(dummy_message)
-                        '''
+                        #'''
+                        log_slots = self._log.keys()
+                        proposed_slot = message[2]
+                        for i in range(proposed_slot):
+                            if i not in self._log.keys():
+                                #dummy_message = ("propose", Calendar(), i, self._node_id)
+                                #self._proposer._command_queue.append(dummy_message)
+                                #time.sleep(.1)
+                                slot_calendar = self._acceptor._accVals[i]
+                                self._log[i] = slot_calendar
+                        #'''
                         #Then we can add this new proposal
                         self._proposer._command_queue.append(message)
                     else:
@@ -280,6 +283,9 @@ class Node(object):
                 if self._leader != prev_leader:
                     logging.debug("NEW LEADER IS: " + str(self._leader))
                     prev_leader = self._leader
+
+                if self._terminate:
+                    break
 
             recv_socket.close()
 

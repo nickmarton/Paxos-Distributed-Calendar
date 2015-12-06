@@ -115,13 +115,13 @@ class Proposer(object):
                         if not hasattr(v, "_is_Calendar"):
                             m, v = self._my_proposals[slot]
 
-                        if slot not in self._committed_slots:
-                            self._send_accept(m, v, slot)
+                        #if slot not in self._committed_slots:
+                        self._send_accept(m, v, slot)
 
                 if self._terminate:
                     break
 
-                time.sleep(.001)
+                time.sleep(.1)
 
         def _listen_to_acks(self):
             "Begin listening for majority of promises on each log slot"
@@ -151,7 +151,7 @@ class Proposer(object):
                 if self._terminate:
                     break
 
-                time.sleep(.001)
+                time.sleep(.1)
 
         import thread
         thread.start_new_thread(_listen_to_promises, (self,))
@@ -163,13 +163,13 @@ class Proposer(object):
                 message_command_type = message[0]
                 debug_str = "Proposer; "
                 if message_command_type == "propose":
-                    print debug_str + "type: propose " + str(message[2])
+                    #print debug_str + "type: propose " + str(message[2])
                     self._send_prepare(message)
                 if message_command_type == "promise":
                     #print debug_str + "type: promise with slot = " + str(message[3])
                     self._recv_promise(message)
                 if message_command_type == "ack":
-                    #print debug_str + "type: ack "  + str(message[3])
+                    #print debug_str + "type: ack with slot = "  + str(message[3]) + " from " + str(message[4])
                     self._recv_ack(message)
 
             if self._terminate:
