@@ -22,7 +22,9 @@
 	\maketitle
 	
 	\section{Leader Election}
-		Leader election is done in the Node.py file, and is initiated when a Node does not have a value for current leader. The method elect\_leader creates a thread that listens for TCP connections from other nodes. The leader is then determined using the Bully algorithm. 
+		For leader election, we use the bully algorithm; the implementation of which is within the Bully.py file.
+		Leader election is done by a Node in the Node.py file. A Node begins participating in leader election when it is first executed. The Node's internal method \textit{elect\_leader} creates a thread that listens for TCP connections from other nodes and which initiates a new election every 6 seconds (this is represented with the \textit{poll\_time} parameter; this parameter can be changed, but from empirical testing, 6 seconds is the earliest time for which all Node's receive all exchanged TCP messages).
+
 	\section{Node}
 		The Node class acts as a single instance of a machine running the Paxos algorithm. Every Node creates a UDP server thread, and Acceptor and Proposer objects as a threads.
 		The UDP server thread waits for messages from other Node's Acceptors and Proposers and parses them. After parsing the UDP message, the contents are given to the corresponding subroutine's queue. A learner thread is created to poll the commit queue of the Node's acceptor in order to fill the log of commits and update the calendar.  The implementation of the Paxos algorithm is also in the Node class. 
