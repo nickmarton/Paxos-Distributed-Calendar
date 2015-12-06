@@ -1,5 +1,6 @@
 """Proposer class for Paxos Calendar."""
 import time
+from Calendar import Calendar
 
 class Proposer(object):
     """
@@ -63,7 +64,7 @@ class Proposer(object):
 
     def _send_accept(self, m, v, log_slot):
         """Send accept message as described in Synod Algorithm."""
-        transmission = ("accept", m, v, log_slot)
+        transmission = ("accept", m, Calendar.serialize(v), log_slot)
         for ID, IP_info in self._ip_table.items():
             IP, UDP_PORT = IP_info[0], IP_info[2]
             self._send_UDP_message(transmission, IP, UDP_PORT)
@@ -75,7 +76,7 @@ class Proposer(object):
 
     def _send_commit(self, v, log_slot):
         """Send commit message as described in Synod Algorithm."""
-        transmission = ("commit", v, log_slot)
+        transmission = ("commit", Calendar.serialize(v), log_slot)
         for ID, IP_info in self._ip_table.items():
             IP, UDP_PORT = IP_info[0], IP_info[2]
             self._send_UDP_message(transmission, IP, UDP_PORT)

@@ -3,6 +3,7 @@
 import pickle
 import socket
 import time
+from Calendar import Calendar
 
 class Acceptor(object):
     """
@@ -61,7 +62,7 @@ class Acceptor(object):
 
     def _send_promise(self, IP, PORT, accNum, accVal, log_slot):
         """Send promise message with given accNum, accVal to given IP, PORT."""
-        transmission = ("promise", accNum, accVal, log_slot)
+        transmission = ("promise", accNum, Calendar.serialize(accVal), log_slot)
         self._send_UDP_message(transmission, IP, PORT)
 
     def _recv_accept(self, message):
@@ -85,7 +86,7 @@ class Acceptor(object):
 
     def _send_ack(self, IP, PORT, accNum, accVal, log_slot):
         """Send ack with given accNum, accVal to given IP, PORT."""
-        transmission = ("ack", accNum, accVal, log_slot)
+        transmission = ("ack", accNum, Calendar.serialize(accVal), log_slot)
         self._send_UDP_message(transmission, IP, PORT)
 
     def _recv_commit(self, message):
@@ -108,9 +109,7 @@ class Acceptor(object):
                     #print debug_str + "type: prepare with slot = " + str(message[2]) + ", m = " + str(message[1])
                     self._recv_prepare(message)
                 elif message_command_type == "accept":
-                    if (debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])) not in stap:
-                        #print debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])
-                        stap.append(debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1]))
+                    #print debug_str + "type: accept with slot = " + str(message[3]) + ", m = " + str(message[1])
                     self._recv_accept(message)
                 elif message_command_type == "commit":
                     #print debug_str + "type: commit " + str(message[2])

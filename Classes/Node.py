@@ -70,7 +70,7 @@ class Node(object):
         try:
             leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
             proposal_message = pickle.dumps(
-                ("propose", new_calendar, next_log_slot))
+                ("propose", Calendar.serialize(new_calendar), next_log_slot))
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
             udp_socket.close()
@@ -99,7 +99,7 @@ class Node(object):
         try:
             leader_IP, leader_TCP, leader_UDP = self._ip_table[self._leader]
             proposal_message = pickle.dumps(
-                ("propose", new_calendar, next_log_slot))
+                ("propose", Calendar.serialize(new_calendar), next_log_slot))
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.sendto(proposal_message, (leader_IP, leader_UDP))
             udp_socket.close()
@@ -217,7 +217,6 @@ class Node(object):
             while True:
                 if self._acceptor._commits_queue:
                     (log_slot, v) = self._acceptor._commits_queue.pop()
-                    #print "LEARNED FOR SLOT " + str(log_slot) 
                     self._log[log_slot] = v
                     self._calendar = self._log[max(self._log.keys())]
 
@@ -261,7 +260,22 @@ class Node(object):
                 message = pickle.loads(data)
                 #bind sender_ID to message
                 message = message + (sender_ID,)
-                _parse_message(message)
+
+                #construct deserailized version of message
+                new_message = []
+                for field in message:
+                    if type(field) == str:
+                        try:
+                            deserialized_calendar = Calendar.deserialize(field)
+                            new_message.append(deserialized_calendar)
+                        except:
+                            new_message.append(field)
+                    else:
+                        new_message.append(field)
+
+                new_message = tuple(new_message)
+                _parse_message(new_message)
+
 
         thread.start_new_thread(_do_paxos, (self,))
 

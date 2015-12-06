@@ -226,7 +226,10 @@ class Calendar(object):
     def deserialize(serial_msg):
         """Return a Calendar object parsed from a serialized string"""
         if not serial_msg:
-            return None
+            return serial_msg
+
+        if type(serial_msg) != str:
+            return serial_msg
 
         appt_list = serial_msg.split("#")
         appt_for_calendar = []
