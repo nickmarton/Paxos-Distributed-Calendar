@@ -619,17 +619,16 @@ def main():
     N._calendar = c
 
     #try to load a previous state of this Node
-    '''
+    #'''
     try:
         N = Node.load()
     except ValueError:
         pass
     except IOError:
         pass
-    '''
+    #'''
 
     N.elect_leader(poll_time=6, timeout=3)
-    #N._leader = 4
     N.paxos()
 
     print("@> Node Started")
