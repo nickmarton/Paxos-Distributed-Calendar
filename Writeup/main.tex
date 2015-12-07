@@ -26,14 +26,36 @@
 		Leader election is done by a Node in the Node.py file. A Node begins participating in leader election when it is first executed. The Node's internal method \textit{elect\_leader} creates a thread that listens for TCP connections from other nodes and which initiates a new election every 6 seconds (this is represented with the \textit{poll\_time} parameter; this parameter can be changed, but from empirical testing, 6 seconds is the earliest time for which all Node's receive all exchanged TCP messages).
 
 	\section{Node}
-		The Node class acts as a single instance of a machine running the Paxos algorithm. Every Node creates a UDP server thread, and Acceptor and Proposer objects as a threads.
-		The UDP server thread waits for messages from other Node's Acceptors and Proposers and parses them. After parsing the UDP message, the contents are given to the corresponding subroutine's queue. A learner thread is created to poll the commit queue of the Node's acceptor in order to fill the log of commits and update the calendar.  The implementation of the Paxos algorithm is also in the Node class. 
+		The Node class acts as a single instance of a machine running the both the Bully algorithm and Paxos algorithm. \\
+		
+		\noindent The Node objects distributes the listening involved in Paxos across the following five threads:
+		\begin{enumerate}
+			\item A UDP server to receive all UDP messages' the sole purpose of this server is to pass UDP messages to the Proposer or Acceptor respectively. After parsing the UDP message, the contents are given to the corresponding subroutine's queue.
+			\item A Proposer object, which acts as a server itself, handling all Proposer related messages defined in the Synod algorithm.
+			\item An Acceptor object, which acts as a server itself, handling all Acceptor related messages defined in the Synod algorithm.
+			\item A \textit{learner} server, which polls a queue located in the Acceptor object; this queue contains the commit messages that the Node receives. The server dequeues any commit messages and writes them to the Node's log along with updating the calendar to the calendar in the most recent log position whenever such a message is received.
+			\item Additionally, the main thread acts as a listener and UI to the user.
+		\end{enumerate}
+		
+		\noindent Additionally, the Node class provides methods to parse input into Appointment objects, save and load Node objects according to the specifications provided in the project description and a method that looks for a file named ``IP\_translations.txt'' which it uses to build an IP-Port table with an entry corresponding to each Node in the network.
+		
 	\subsection{Acceptor}
-		The Acceptor class is implemented in Acceptor.py. The method "start" creates a listener that waits for messages passed from the Node class. The Acceptor class's queue is then serviced in a FIFO order. The Acceptor class will send the message required by the servicing of an item in a queue to all other Nodes. All required recieve and send messages are impelemented in the Acceptor class.
+		The Acceptor class is implemented in Acceptor.py. A Node object contains an Acceptor object and ``starts'' the Acceptor when the Paxos algorithm is initiated via the \textit{start} method. This method acts as a server and responds to messages meant for an Acceptor in the Synod algorithm; namely ``prepare'', ``accept'' and ``commit''.
+		A Node passes these messages to the Acceptor by placing them on the Acceptor's \textit{command\_queue} attribute.
+		The Acceptor server will then dequeue and respond to any message as it should according to the Synod algorithm in FIFO order.
+
 	\subsection{Proposer}
-		The Proposer class is implemented in Proposer.py. Proposer starts a listener thread that waits for messages passed to its queue from the Node class. After processing an item in its queue in a FIFO order, it will send a message to all other Nodes. The required methods for processing a specific type of message are implemented in Proposer.py.
+		The Proposer class is implemented in Proposer.py. A Node object contains a Proposer object and ``starts'' the Proposer when the Paxos algorithm is initiated via the \textit{start} method. As in the Acceptor class, this method acts as a server and responds to messages meant for a Proposer in the Synod algorithm; namely ``propose'', ``promise'' and ``ack'' and the Node passes these messages to the Proposer by placing them on the Proposer's \textit{command\_queue} attribute.
+		The Proposer server will then dequeue and respond to any message as it should according to the Synod algorithm in FIFO order. Additionally, Proposer objects create two threads:
+		
+		\begin{enumerate}
+			\item The first thread it creates acts as a server, which polls a dictionary of lists and waits to respond with accept messages for a specific log slot until a majority of promises are found for that log slot. It chooses the calendar for accept messages according to the selection process of the value ``v'' defined in the Synod algorithm.
+			\item The second thread acts as an ``ack'' server, which polls a dictionary of lists and waits to respond with commit messages for a specific log slot until a majority of acks are found for that log slot. Once a majority is found, the Proposer distributes the commit message and marks that a commit for that log slot was sent out to avoid sending duplicate commit messages in the next iteration of the server's listening.
+		\end{enumerate}
+
 	\section{Calendar and Appointments}
 		The implementation of the Appointment class can be found in Appointment.py. The Appointment class acts as a specific entry in the calendar. The Calendar classes' implementation can be found in Calendar.py. The Calendar class acts as a collection of Appointment objects, and has the necessary methods for comparing Calendar objects, self serialization for sending, and output representation.
+
 	\section{Paxos}
 		The Paxos algorithm is implemented in Node.py, and starts several subroutines. The subroutine  \_do\_paxos creates a UDP server thread, that listens for incoming messages from other Nodes. These messages are then handled by the \_parse\_message method, which hands them to the Acceptor and Proposer
 		threads at that Node.  The entry that is filled in the Paxos' algorithms log is a version of the Calendar. So when a Proposer proposes a new value for a log entry, it is a new version of the calendar.
